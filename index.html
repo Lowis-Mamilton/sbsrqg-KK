@@ -51,10 +51,9 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
   display:flex; 
   justify-content:center; 
 }
-
 .formula-card { 
   width:100%; 
-  max-width:720px; /* 限制最大寬度，避免太寬 */
+  max-width:720px;
   background:var(--panel); 
   border-radius:20px; 
   padding:16px; 
@@ -64,18 +63,14 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
   gap:12px; 
   align-items:flex-start; 
 }
-
 .left { flex:1; }
 .right { width:90px; flex:0 0 90px; text-align:center; }
-
 .left h3, .right h3 { 
   margin:0 0 6px 0; 
   font-size:18px; 
   color:#111; 
 }
-
 .rows { display:flex; flex-direction:column; gap:6px; }
-
 .row { 
   display:grid; 
   grid-template-columns: 24px 1fr; 
@@ -86,10 +81,8 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
   min-height:26px; 
   background:transparent; 
 }
-
 .row .idx { font-weight:700; color:#222; font-size:16px; }
 .row .expr { font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#0c0c0c; }
-
 .right .err-row { 
   height:26px; 
   display:flex; 
@@ -100,10 +93,29 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
   font-size:16px;
 }
 
-
 /* 底部按鈕 */
-.bottom { display:flex; justify-content:center; margin-top:auto; padding-top:6px; }
+.bottom { display:flex; justify-content:center; gap:12px; margin-top:auto; padding-top:6px; }
 .btn { background:#7fb8ff; color:#fff; border:none; padding:12px 26px; font-size:18px; border-radius:12px; cursor:pointer; box-shadow:0 8px 12px rgba(0,0,0,0.08); }
+
+/* 手動改題彈窗 */
+#manualModal {
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.5);
+  display:none; align-items:center; justify-content:center;
+}
+.modal-content {
+  background:#fff; padding:20px; border-radius:12px;
+  max-width:300px; width:100%;
+  display:flex; flex-direction:column; gap:12px;
+}
+.modal-content label { font-size:14px; font-weight:600; }
+.modal-content input, .modal-content select {
+  padding:6px; font-size:16px; border-radius:6px; border:1px solid #ccc;
+}
+.modal-actions { display:flex; justify-content:flex-end; gap:10px; }
+.modal-actions button { padding:6px 14px; border:none; border-radius:6px; cursor:pointer; }
+.modal-actions .ok { background:#7fb8ff; color:#fff; }
+.modal-actions .cancel { background:#aaa; color:#fff; }
 
 @media (max-width:980px){
   .wrap{padding:10px;}
@@ -111,42 +123,19 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
   .right{width:100%;}
 }
 @media (max-width: 600px) {
-  html, body {
-    overflow: auto; /* 手機可以捲動 */
+  html, body { overflow:auto; }
+  .wrap { height:auto; min-height:100vh; }
+  .top-row { flex-direction: column; align-items: stretch; gap: 12px; }
+  .card { width:100%; min-width:unset; }
+  .button {
+    width: auto;       /* 自動依文字大小 */
+    min-width: 100px;  /* 至少有一點大小，不要太窄 */
+    padding: 10px 16px;
+    font-size: 16px;
   }
-
-  .wrap {
-    height: auto;
-    min-height: 100vh;
-  }
-
-  .top-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-  }
-
-  .card {
-    width: 100%;
-    min-width: unset;
-  }
-
-  .bottom {
-    padding-bottom: 20px;
-  }
-  .formula-card {
-    flex-direction: row;  /* ✅ 保持左右並排 */
-    align-items: flex-start;
-  }
-
-  .left, .right {
-    width: auto;
-    flex: 1;
-  }
-
-  .right {
-    max-width: 90px;  /* 保持誤差值區塊窄一些 */
-  }
+  .formula-card { flex-direction: row; align-items:flex-start; }
+  .left, .right { width:auto; flex:1; }
+  .right { max-width:90px; }
 }
 </style>
 </head>
@@ -182,226 +171,281 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
 
 <div class="bottom">
   <button class="btn" id="regenBtn">重新抽題</button>
+  <button class="btn" id="manualBtn">手動改題</button>
 </div>
+</div>
+
+<!-- 手動輸入的彈窗 -->
+<div id="manualModal">
+  <div class="modal-content">
+    <label>目標數字 (100~999)</label>
+    <input type="number" id="manualTarget" min="100" max="999" />
+    <label>幸運方塊 A (0~9)</label>
+    <input type="number" id="manualA" min="0" max="9" />
+    <label>幸運方塊 B (× ÷)</label>
+    <select id="manualB">
+      <option value="*">×</option>
+      <option value="/">÷</option>
+    </select>
+    <label>幸運方塊 C (＋ －)</label>
+    <select id="manualC">
+      <option value="+">＋</option>
+      <option value="-">－</option>
+    </select>
+    <div class="modal-actions">
+      <button class="ok" id="manualOk">確定</button>
+      <button class="cancel" id="manualCancel">取消</button>
+    </div>
+  </div>
 </div>
 
 <script>
-  // Service Worker 註冊程式碼
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered! Scope: ', registration.scope);
-        })
-        .catch((err) => {
-          console.log('Service Worker registration failed: ', err);
-        });
-    });
-  }
 
-  // 原始的應用程式邏輯
-  function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-  function shuffle(arr){ const a=arr.slice(); for (let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]];} return a; }
-  const OPS_SHOW = {"*":"×","/":"÷","+":"＋","-":"－"};
-  const ALL_OPS = ["+","-","*","/"];
-  const MUL_DIV = ["*","/"];
-  const ADD_SUB = ["+","-"];
-  function safeEval(expr){ if ( /\/\s*0(?![0-9])/g.test(expr) ) return NaN; try { const v = eval(expr); if (typeof v === "number" && isFinite(v)) return v; } catch(e){} return NaN; }
-  function fmtNum(x){ if (x===null || isNaN(x)) return "-"; if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x)); return (Math.round(x*100)/100).toFixed(2); }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js')
+      .then((registration) => {
+        console.log('Service Worker registered! Scope: ', registration.scope);
+      })
+      .catch((err) => {
+        console.log('Service Worker registration failed: ', err);
+      });
+  });
+}
+/* --- 保留原本所有程式邏輯 --- */
+function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffle(arr){ const a=arr.slice(); for (let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]];} return a; }
+const OPS_SHOW = {"*":"×","/":"÷","+":"＋","-":"－"};
+const ALL_OPS = ["+","-","*","/"];
+const MUL_DIV = ["*","/"];
+const ADD_SUB = ["+","-"];
+function safeEval(expr){ if ( /\/\s*0(?![0-9])/g.test(expr) ) return NaN; try { const v = eval(expr); if (typeof v === "number" && isFinite(v)) return v; } catch(e){} return NaN; }
+function fmtNum(x){ if (x===null || isNaN(x)) return "-"; if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x)); return (Math.round(x*100)/100).toFixed(2); }
+const ONE = Array.from({length:10},(_,i)=>String(i));
+const TWO = Array.from({length:90}, (_,i)=>String(i+10));
+const NUM_POOL = ONE.concat(TWO);
 
-  const ONE = Array.from({length:10},(_,i)=>String(i));
-  const TWO = Array.from({length:90}, (_,i)=>String(i+10));
-  const NUM_POOL = ONE.concat(TWO);
-
-  // ✅ 新增：檢查數字每個位數是否唯一
-  function digitsUnique(numbers) {
-    const seen = new Set();
-    for (let n of numbers) {
-      for (let ch of n) {
-        if (seen.has(ch)) return false;
-        seen.add(ch);
-      }
+function digitsUnique(numbers) {
+  const seen = new Set();
+  for (let n of numbers) {
+    for (let ch of n) {
+      if (seen.has(ch)) return false;
+      seen.add(ch);
     }
-    return true;
   }
+  return true;
+}
 
-  function generateLuckAndTarget(){
-    const target = randInt(100,999);
-    const luckA = String(randInt(0,9));
-    const luckB = pick(MUL_DIV);
-    const luckC = pick(ADD_SUB);
-    return {target, luckA, luckB, luckC};
+function generateLuckAndTarget(){
+  const target = randInt(100,999);
+  const luckA = String(randInt(0,9));
+  const luckB = pick(MUL_DIV);
+  const luckC = pick(ADD_SUB);
+  return {target, luckA, luckB, luckC};
+}
+
+function makeCandidateTokens(luckA, luckB, luckC){
+  const numbersCount = pick([3,4,5]);
+  const pool = NUM_POOL.filter(x=>x !== luckA);
+  const chosenNums = [luckA];
+  const shuffledPool = shuffle(pool);
+  for (let p of shuffledPool){
+    if (chosenNums.length >= numbersCount) break;
+    if (!chosenNums.includes(p)) chosenNums.push(p);
   }
-
-  function makeCandidateTokens(luckA, luckB, luckC){
-    const numbersCount = pick([3,4,5]);
-    const pool = NUM_POOL.filter(x=>x !== luckA);
-    const chosenNums = [luckA];
-    const shuffledPool = shuffle(pool);
-    for (let p of shuffledPool){
-      if (chosenNums.length >= numbersCount) break;
-      if (!chosenNums.includes(p)) chosenNums.push(p);
-    }
-    if (chosenNums.length < numbersCount) return null;
-    const opsCount = numbersCount - 1;
-    if (opsCount < 2) return null;
-    let ops = [luckB, luckC];
-    if (opsCount > ops.length){
-      const extras = ALL_OPS.filter(o=>!ops.includes(o));
-      const take = shuffle(extras).slice(0, opsCount - ops.length);
-      ops = ops.concat(take);
-    }
-    if (!digitsUnique(chosenNums)) return null; // ✅ 用位數檢查
-    if (!new Set(ops).size === ops.length) return null;
-    const numsShuffled = shuffle(chosenNums);
-    const opsShuffled = shuffle(ops);
-    let exprJS = "";
-    for (let i=0;i<numsShuffled.length;i++){
-      exprJS += numsShuffled[i];
-      if (i < opsShuffled.length) exprJS += opsShuffled[i];
-    }
-    return { numbers: numsShuffled, ops: opsShuffled, exprJS };
+  if (chosenNums.length < numbersCount) return null;
+  const opsCount = numbersCount - 1;
+  if (opsCount < 2) return null;
+  let ops = [luckB, luckC];
+  if (opsCount > ops.length){
+    const extras = ALL_OPS.filter(o=>!ops.includes(o));
+    const take = shuffle(extras).slice(0, opsCount - ops.length);
+    ops = ops.concat(take);
   }
+  if (!digitsUnique(chosenNums)) return null;
+  if (!new Set(ops).size === ops.length) return null;
+  const numsShuffled = shuffle(chosenNums);
+  const opsShuffled = shuffle(ops);
+  let exprJS = "";
+  for (let i=0;i<numsShuffled.length;i++){
+    exprJS += numsShuffled[i];
+    if (i < opsShuffled.length) exprJS += opsShuffled[i];
+  }
+  return { numbers: numsShuffled, ops: opsShuffled, exprJS };
+}
 
-  function evalCandidateTokens(tokens){
-    const expr = tokens.numbers.map((n,i)=> n + (i < tokens.ops.length ? tokens.ops[i] : "")).join("");
+function evalCandidateTokens(tokens){
+  const expr = tokens.numbers.map((n,i)=> n + (i < tokens.ops.length ? tokens.ops[i] : "")).join("");
+  const val = safeEval(expr);
+  if (isNaN(val)) return null;
+  return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val };
+}
+
+function findBestBase(target, luckA, luckB, luckC, trials=1200){
+  const seen = new Set();
+  const candidates = [];
+  for (let i=0;i<trials;i++){
+    const tokens = makeCandidateTokens(luckA, luckB, luckC);
+    if (!tokens) continue;
+    if (seen.has(tokens.exprJS)) continue;
+    seen.add(tokens.exprJS);
+    const evald = evalCandidateTokens(tokens);
+    if (!evald) continue;
+    evald.tokens = tokens;
+    evald.error = Math.abs(evald.value - target);
+    candidates.push(evald);
+  }
+  if (candidates.length === 0) return null;
+  candidates.sort((a,b)=> a.error - b.error);
+  return candidates[0];
+}
+
+function makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existingSet){
+  const tokens = baseObj.tokens;
+  const numbers = tokens.numbers.slice();
+  const ops = tokens.ops.slice();
+  const numIndexes = [];
+  for (let i=0;i<numbers.length;i++){ if (numbers[i] !== String(luckA)) numIndexes.push(i); }
+  const opIndexes = [];
+  for (let j=0;j<ops.length;j++){ if (ops[j] !== luckB && ops[j] !== luckC) opIndexes.push(j); }
+  for (let attempt=0; attempt<80; attempt++){
+    const newNums = numbers.slice();
+    const newOps = ops.slice();
+    let changed = false;
+    if (numIndexes.length > 0 && Math.random() < 0.8){
+      const idx = pick(numIndexes);
+      const pool = NUM_POOL.filter(x => !newNums.includes(x) && x !== String(luckA));
+      if (pool.length === 0) continue;
+      newNums[idx] = pick(pool);
+      changed = true;
+    } else if (opIndexes.length > 0){
+      const j = pick(opIndexes);
+      const poolOps = ALL_OPS.filter(o => o !== newOps[j]);
+      if (poolOps.length === 0) continue;
+      newOps[j] = pick(poolOps);
+      if (!newOps.includes(luckB) || !newOps.includes(luckC)) continue;
+      changed = true;
+    }
+    if (!changed) continue;
+    if (!digitsUnique(newNums)) continue;
+    if (!new Set(newOps).size === newOps.length) continue;
+    const expr = newNums.map((n,i)=> n + (i < newOps.length ? newOps[i] : "")).join("");
+    if (existingSet.has(expr)) continue;
     const val = safeEval(expr);
-    if (isNaN(val)) return null;
-    return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val };
+    if (isNaN(val)) continue;
+    return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: Math.abs(val - target), tokens: { numbers: newNums, ops: newOps } };
   }
+  return null;
+}
 
-  function findBestBase(target, luckA, luckB, luckC, trials=1200){
-    const seen = new Set();
-    const candidates = [];
-    for (let i=0;i<trials;i++){
-      const tokens = makeCandidateTokens(luckA, luckB, luckC);
-      if (!tokens) continue;
-      if (seen.has(tokens.exprJS)) continue;
-      seen.add(tokens.exprJS);
-      const evald = evalCandidateTokens(tokens);
-      if (!evald) continue;
-      evald.tokens = tokens;
-      evald.error = Math.abs(evald.value - target);
-      candidates.push(evald);
-    }
-    if (candidates.length === 0) return null;
-    candidates.sort((a,b)=> a.error - b.error);
-    return candidates[0];
+function produceFiveVariants(baseObj, target, luckA, luckB, luckC){
+  const produced = [ { exprJS: baseObj.exprJS, exprShow: baseObj.exprShow, value: baseObj.value, error: baseObj.error, tokens: baseObj.tokens } ];
+  const existing = new Set([baseObj.exprJS]);
+  for (let i=0;i<4;i++){
+    const v = makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existing);
+    if (v){ produced.push(v); existing.add(v.exprJS); }
+    else break;
   }
-
-  function makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existingSet){
-    const tokens = baseObj.tokens;
-    const numbers = tokens.numbers.slice();
-    const ops = tokens.ops.slice();
-    const numIndexes = [];
-    for (let i=0;i<numbers.length;i++){ if (numbers[i] !== String(luckA)) numIndexes.push(i); }
-    const opIndexes = [];
-    for (let j=0;j<ops.length;j++){ if (ops[j] !== luckB && ops[j] !== luckC) opIndexes.push(j); }
-    for (let attempt=0; attempt<80; attempt++){
-      const newNums = numbers.slice();
-      const newOps = ops.slice();
-      let changed = false;
-      if (numIndexes.length > 0 && Math.random() < 0.8){
-        const idx = pick(numIndexes);
-        const pool = NUM_POOL.filter(x => !newNums.includes(x) && x !== String(luckA));
-        if (pool.length === 0) continue;
-        newNums[idx] = pick(pool);
-        changed = true;
-      } else if (opIndexes.length > 0){
-        const j = pick(opIndexes);
-        const poolOps = ALL_OPS.filter(o => o !== newOps[j]);
-        if (poolOps.length === 0) continue;
-        newOps[j] = pick(poolOps);
-        if (!newOps.includes(luckB) || !newOps.includes(luckC)) continue;
-        changed = true;
-      }
-      if (!changed) continue;
-      if (!digitsUnique(newNums)) continue; // ✅ 改成位數檢查
-      if (!new Set(newOps).size === newOps.length) continue;
-      const expr = newNums.map((n,i)=> n + (i < newOps.length ? newOps[i] : "")).join("");
-      if (existingSet.has(expr)) continue;
-      const val = safeEval(expr);
-      if (isNaN(val)) continue;
-      return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: Math.abs(val - target), tokens: { numbers: newNums, ops: newOps } };
-    }
-    return null;
+  while (produced.length < 5){
+    produced.push({ exprShow:"-", value:NaN, error:Infinity, exprJS:"-", tokens:null });
   }
+  produced.sort((a,b)=> (a.error === Infinity ? 1 : a.error) - (b.error === Infinity ? 1 : b.error));
+  return produced.slice(0,5);
+}
 
-  function produceFiveVariants(baseObj, target, luckA, luckB, luckC){
-    const produced = [ { exprJS: baseObj.exprJS, exprShow: baseObj.exprShow, value: baseObj.value, error: baseObj.error, tokens: baseObj.tokens } ];
-    const existing = new Set([baseObj.exprJS]);
-    for (let i=0;i<4;i++){
-      const v = makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existing);
-      if (v){ produced.push(v); existing.add(v.exprJS); }
-      else break;
-    }
-    while (produced.length < 5){
-      produced.push({ exprShow:"-", value:NaN, error:Infinity, exprJS:"-", tokens:null });
-    }
-    produced.sort((a,b)=> (a.error === Infinity ? 1 : a.error) - (b.error === Infinity ? 1 : b.error));
-    return produced.slice(0,5);
+/* --- DOM 元件 --- */
+const d0 = document.getElementById("d0");
+const d1 = document.getElementById("d1");
+const d2 = document.getElementById("d2");
+const luckAEl = document.getElementById("luckA");
+const luckBEl = document.getElementById("luckB");
+const luckCEl = document.getElementById("luckC");
+const formulaRows = document.getElementById("formulaRows");
+const errorRows = document.getElementById("errorRows");
+const regenBtn = document.getElementById("regenBtn");
+const manualBtn = document.getElementById("manualBtn");
+const modal = document.getElementById("manualModal");
+const manualTarget = document.getElementById("manualTarget");
+const manualA = document.getElementById("manualA");
+const manualB = document.getElementById("manualB");
+const manualC = document.getElementById("manualC");
+const manualOk = document.getElementById("manualOk");
+const manualCancel = document.getElementById("manualCancel");
+
+function initFiveRows(){
+  formulaRows.innerHTML = "";
+  errorRows.innerHTML = "";
+  for (let i=0;i<5;i++){
+    const row = document.createElement("div");
+    row.className="row";
+    row.innerHTML = `<div class="idx">${i+1}</div><div class="expr" id="expr${i}">-</div>`;
+    formulaRows.appendChild(row);
+    const er = document.createElement("div");
+    er.className="err-row";
+    er.id = "err"+i;
+    er.textContent="-";
+    errorRows.appendChild(er);
   }
-
-  const d0 = document.getElementById("d0");
-  const d1 = document.getElementById("d1");
-  const d2 = document.getElementById("d2");
-  const luckAEl = document.getElementById("luckA");
-  const luckBEl = document.getElementById("luckB");
-  const luckCEl = document.getElementById("luckC");
-  const formulaRows = document.getElementById("formulaRows");
-  const errorRows = document.getElementById("errorRows");
-  const regenBtn = document.getElementById("regenBtn");
-
-  function initFiveRows(){
-    formulaRows.innerHTML = "";
-    errorRows.innerHTML = "";
-    for (let i=0;i<5;i++){
-      const row = document.createElement("div");
-      row.className = "row";
-      row.innerHTML = `<div class="idx">${i+1}.</div><div class="expr">-</div>`;
-      formulaRows.appendChild(row);
-      const err = document.createElement("div");
-      err.className = "err-row";
-      err.textContent = "-";
-      errorRows.appendChild(err);
+}
+function fillRows(arr){
+  for (let i=0;i<5;i++){
+    const exprDiv = document.getElementById("expr"+i);
+    const errDiv = document.getElementById("err"+i);
+    if (!arr[i] || arr[i].exprShow === "-"){
+      exprDiv.textContent="-";
+      errDiv.textContent="-";
+    } else {
+      exprDiv.textContent = arr[i].exprShow;
+      errDiv.textContent = (arr[i].error === Infinity) ? "-" : fmtNum(arr[i].error);
     }
   }
+}
 
-  function fillRows(list){
-    const rows = formulaRows.querySelectorAll(".row");
-    const errRows = errorRows.querySelectorAll(".err-row");
-    for (let i=0;i<5;i++){
-      const r = rows[i];
-      const e = errRows[i];
-      const exprDiv = r.querySelector(".expr");
-      if (list[i]){
-        const text = (list[i].exprShow === "-" ? "-" : `${list[i].exprShow} = ${fmtNum(list[i].value)}`);
-        exprDiv.textContent = text;
-        e.textContent = (list[i].error === Infinity ? "-" : fmtNum(list[i].error));
-      } else {
-        exprDiv.textContent = "-";
-        e.textContent = "-";
-      }
-    }
+function regenerate(){
+  const {target, luckA, luckB, luckC} = generateLuckAndTarget();
+  const s = String(target).padStart(3,"0");
+  d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
+  luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
+  const base = findBestBase(target, luckA, luckB, luckC, 1200);
+  let produced;
+  if (base){ produced = produceFiveVariants(base, target, luckA, luckB, luckC); }
+  else {
+    produced = Array(5).fill({exprShow:"-", value:NaN, error:Infinity});
   }
-
-  function regenerate(){
-    initFiveRows();
-    const {target, luckA, luckB, luckC} = generateLuckAndTarget();
-    const s = String(target).padStart(3,"0");
-    d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
-    luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
-    const base = findBestBase(target, luckA, luckB, luckC, 1200);
-    let produced;
-    if (!base){ produced = Array.from({length:5}, ()=>({exprShow:"-", value:NaN, error:Infinity})); }
-    else { produced = produceFiveVariants(base, target, luckA, luckB, luckC); }
-    fillRows(produced);
+  fillRows(produced);
+}
+function regenerateCustom(target, luckA, luckB, luckC){
+  const s = String(target).padStart(3,"0");
+  d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
+  luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
+  const base = findBestBase(target, luckA, luckB, luckC, 1200);
+  let produced;
+  if (base){ produced = produceFiveVariants(base, target, luckA, luckB, luckC); }
+  else {
+    produced = Array(5).fill({exprShow:"-", value:NaN, error:Infinity});
   }
+  fillRows(produced);
+}
 
-  initFiveRows();
-  regenerate();
-  regenBtn.addEventListener("click", regenerate);
+/* --- 綁定 --- */
+regenBtn.addEventListener("click", regenerate);
+manualBtn.addEventListener("click", ()=> { modal.style.display="flex"; });
+manualCancel.addEventListener("click", ()=> { modal.style.display="none"; });
+manualOk.addEventListener("click", ()=>{
+  const t = parseInt(manualTarget.value);
+  const a = manualA.value;
+  const b = manualB.value;
+  const c = manualC.value;
+  if (!t || t<100 || t>999){ alert("目標數字必須 100~999"); return; }
+  if (a==="" || a<0 || a>9){ alert("幸運方塊 A 必須 0~9"); return; }
+  regenerateCustom(t,String(a),b,c);
+  modal.style.display="none";
+});
+
+/* --- 初始化 --- */
+initFiveRows();
+regenerate();
 </script>
 </body>
 </html>
