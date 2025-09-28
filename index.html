@@ -4,6 +4,9 @@
 <meta charset="utf-8" />
 <title>幸運公式產生器</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta name="theme-color" content="#f6d8ad" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192x192.png" />
 <style>
 :root{ 
   --bg:#ffffff; --panel:#f6d8ad; --accent:#7fb8ff; 
@@ -132,7 +135,7 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
     padding-bottom: 20px;
   }
   .formula-card {
-    flex-direction: row;  /* ✅ 保持左右並排 */
+    flex-direction: row;  /* ✅ 保持左右並排 */
     align-items: flex-start;
   }
 
@@ -142,10 +145,9 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
   }
 
   .right {
-    max-width: 90px;  /* 保持誤差值區塊窄一些 */
+    max-width: 90px;  /* 保持誤差值區塊窄一些 */
   }
 }
-
 </style>
 </head>
 <body>
@@ -184,208 +186,222 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
 </div>
 
 <script>
-function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
-function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function shuffle(arr){ const a=arr.slice(); for (let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]];} return a; }
-const OPS_SHOW = {"*":"×","/":"÷","+":"＋","-":"－"};
-const ALL_OPS = ["+","-","*","/"];
-const MUL_DIV = ["*","/"];
-const ADD_SUB = ["+","-"];
-function safeEval(expr){ if ( /\/\s*0(?![0-9])/g.test(expr) ) return NaN; try { const v = eval(expr); if (typeof v === "number" && isFinite(v)) return v; } catch(e){} return NaN; }
-function fmtNum(x){ if (x===null || isNaN(x)) return "-"; if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x)); return (Math.round(x*100)/100).toFixed(2); }
+  // Service Worker 註冊程式碼
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('Service Worker registered! Scope: ', registration.scope);
+        })
+        .catch((err) => {
+          console.log('Service Worker registration failed: ', err);
+        });
+    });
+  }
 
-const ONE = Array.from({length:10},(_,i)=>String(i));
-const TWO = Array.from({length:90}, (_,i)=>String(i+10));
-const NUM_POOL = ONE.concat(TWO);
+  // 原始的應用程式邏輯
+  function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
+  function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function shuffle(arr){ const a=arr.slice(); for (let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]];} return a; }
+  const OPS_SHOW = {"*":"×","/":"÷","+":"＋","-":"－"};
+  const ALL_OPS = ["+","-","*","/"];
+  const MUL_DIV = ["*","/"];
+  const ADD_SUB = ["+","-"];
+  function safeEval(expr){ if ( /\/\s*0(?![0-9])/g.test(expr) ) return NaN; try { const v = eval(expr); if (typeof v === "number" && isFinite(v)) return v; } catch(e){} return NaN; }
+  function fmtNum(x){ if (x===null || isNaN(x)) return "-"; if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x)); return (Math.round(x*100)/100).toFixed(2); }
 
-// ✅ 新增：檢查數字每個位數是否唯一
-function digitsUnique(numbers) {
-  const seen = new Set();
-  for (let n of numbers) {
-    for (let ch of n) {
-      if (seen.has(ch)) return false;
-      seen.add(ch);
+  const ONE = Array.from({length:10},(_,i)=>String(i));
+  const TWO = Array.from({length:90}, (_,i)=>String(i+10));
+  const NUM_POOL = ONE.concat(TWO);
+
+  // ✅ 新增：檢查數字每個位數是否唯一
+  function digitsUnique(numbers) {
+    const seen = new Set();
+    for (let n of numbers) {
+      for (let ch of n) {
+        if (seen.has(ch)) return false;
+        seen.add(ch);
+      }
     }
+    return true;
   }
-  return true;
-}
 
-function generateLuckAndTarget(){
-  const target = randInt(100,999);
-  const luckA = String(randInt(0,9));
-  const luckB = pick(MUL_DIV);
-  const luckC = pick(ADD_SUB);
-  return {target, luckA, luckB, luckC};
-}
-
-function makeCandidateTokens(luckA, luckB, luckC){
-  const numbersCount = pick([3,4,5]);
-  const pool = NUM_POOL.filter(x=>x !== luckA);
-  const chosenNums = [luckA];
-  const shuffledPool = shuffle(pool);
-  for (let p of shuffledPool){
-    if (chosenNums.length >= numbersCount) break;
-    if (!chosenNums.includes(p)) chosenNums.push(p);
+  function generateLuckAndTarget(){
+    const target = randInt(100,999);
+    const luckA = String(randInt(0,9));
+    const luckB = pick(MUL_DIV);
+    const luckC = pick(ADD_SUB);
+    return {target, luckA, luckB, luckC};
   }
-  if (chosenNums.length < numbersCount) return null;
-  const opsCount = numbersCount - 1;
-  if (opsCount < 2) return null;
-  let ops = [luckB, luckC];
-  if (opsCount > ops.length){
-    const extras = ALL_OPS.filter(o=>!ops.includes(o));
-    const take = shuffle(extras).slice(0, opsCount - ops.length);
-    ops = ops.concat(take);
-  }
-  if (!digitsUnique(chosenNums)) return null; // ✅ 用位數檢查
-  if (!new Set(ops).size === ops.length) return null;
-  const numsShuffled = shuffle(chosenNums);
-  const opsShuffled = shuffle(ops);
-  let exprJS = "";
-  for (let i=0;i<numsShuffled.length;i++){
-    exprJS += numsShuffled[i];
-    if (i < opsShuffled.length) exprJS += opsShuffled[i];
-  }
-  return { numbers: numsShuffled, ops: opsShuffled, exprJS };
-}
 
-function evalCandidateTokens(tokens){
-  const expr = tokens.numbers.map((n,i)=> n + (i < tokens.ops.length ? tokens.ops[i] : "")).join("");
-  const val = safeEval(expr);
-  if (isNaN(val)) return null;
-  return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val };
-}
-
-function findBestBase(target, luckA, luckB, luckC, trials=1200){
-  const seen = new Set();
-  const candidates = [];
-  for (let i=0;i<trials;i++){
-    const tokens = makeCandidateTokens(luckA, luckB, luckC);
-    if (!tokens) continue;
-    if (seen.has(tokens.exprJS)) continue;
-    seen.add(tokens.exprJS);
-    const evald = evalCandidateTokens(tokens);
-    if (!evald) continue;
-    evald.tokens = tokens;
-    evald.error = Math.abs(evald.value - target);
-    candidates.push(evald);
-  }
-  if (candidates.length === 0) return null;
-  candidates.sort((a,b)=> a.error - b.error);
-  return candidates[0];
-}
-
-function makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existingSet){
-  const tokens = baseObj.tokens;
-  const numbers = tokens.numbers.slice();
-  const ops = tokens.ops.slice();
-  const numIndexes = [];
-  for (let i=0;i<numbers.length;i++){ if (numbers[i] !== String(luckA)) numIndexes.push(i); }
-  const opIndexes = [];
-  for (let j=0;j<ops.length;j++){ if (ops[j] !== luckB && ops[j] !== luckC) opIndexes.push(j); }
-  for (let attempt=0; attempt<80; attempt++){
-    const newNums = numbers.slice();
-    const newOps = ops.slice();
-    let changed = false;
-    if (numIndexes.length > 0 && Math.random() < 0.8){
-      const idx = pick(numIndexes);
-      const pool = NUM_POOL.filter(x => !newNums.includes(x) && x !== String(luckA));
-      if (pool.length === 0) continue;
-      newNums[idx] = pick(pool);
-      changed = true;
-    } else if (opIndexes.length > 0){
-      const j = pick(opIndexes);
-      const poolOps = ALL_OPS.filter(o => o !== newOps[j]);
-      if (poolOps.length === 0) continue;
-      newOps[j] = pick(poolOps);
-      if (!newOps.includes(luckB) || !newOps.includes(luckC)) continue;
-      changed = true;
+  function makeCandidateTokens(luckA, luckB, luckC){
+    const numbersCount = pick([3,4,5]);
+    const pool = NUM_POOL.filter(x=>x !== luckA);
+    const chosenNums = [luckA];
+    const shuffledPool = shuffle(pool);
+    for (let p of shuffledPool){
+      if (chosenNums.length >= numbersCount) break;
+      if (!chosenNums.includes(p)) chosenNums.push(p);
     }
-    if (!changed) continue;
-    if (!digitsUnique(newNums)) continue; // ✅ 改成位數檢查
-    if (!new Set(newOps).size === newOps.length) continue;
-    const expr = newNums.map((n,i)=> n + (i < newOps.length ? newOps[i] : "")).join("");
-    if (existingSet.has(expr)) continue;
+    if (chosenNums.length < numbersCount) return null;
+    const opsCount = numbersCount - 1;
+    if (opsCount < 2) return null;
+    let ops = [luckB, luckC];
+    if (opsCount > ops.length){
+      const extras = ALL_OPS.filter(o=>!ops.includes(o));
+      const take = shuffle(extras).slice(0, opsCount - ops.length);
+      ops = ops.concat(take);
+    }
+    if (!digitsUnique(chosenNums)) return null; // ✅ 用位數檢查
+    if (!new Set(ops).size === ops.length) return null;
+    const numsShuffled = shuffle(chosenNums);
+    const opsShuffled = shuffle(ops);
+    let exprJS = "";
+    for (let i=0;i<numsShuffled.length;i++){
+      exprJS += numsShuffled[i];
+      if (i < opsShuffled.length) exprJS += opsShuffled[i];
+    }
+    return { numbers: numsShuffled, ops: opsShuffled, exprJS };
+  }
+
+  function evalCandidateTokens(tokens){
+    const expr = tokens.numbers.map((n,i)=> n + (i < tokens.ops.length ? tokens.ops[i] : "")).join("");
     const val = safeEval(expr);
-    if (isNaN(val)) continue;
-    return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: Math.abs(val - target), tokens: { numbers: newNums, ops: newOps } };
+    if (isNaN(val)) return null;
+    return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val };
   }
-  return null;
-}
 
-function produceFiveVariants(baseObj, target, luckA, luckB, luckC){
-  const produced = [ { exprJS: baseObj.exprJS, exprShow: baseObj.exprShow, value: baseObj.value, error: baseObj.error, tokens: baseObj.tokens } ];
-  const existing = new Set([baseObj.exprJS]);
-  for (let i=0;i<4;i++){
-    const v = makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existing);
-    if (v){ produced.push(v); existing.add(v.exprJS); }
-    else break;
+  function findBestBase(target, luckA, luckB, luckC, trials=1200){
+    const seen = new Set();
+    const candidates = [];
+    for (let i=0;i<trials;i++){
+      const tokens = makeCandidateTokens(luckA, luckB, luckC);
+      if (!tokens) continue;
+      if (seen.has(tokens.exprJS)) continue;
+      seen.add(tokens.exprJS);
+      const evald = evalCandidateTokens(tokens);
+      if (!evald) continue;
+      evald.tokens = tokens;
+      evald.error = Math.abs(evald.value - target);
+      candidates.push(evald);
+    }
+    if (candidates.length === 0) return null;
+    candidates.sort((a,b)=> a.error - b.error);
+    return candidates[0];
   }
-  while (produced.length < 5){
-    produced.push({ exprShow:"-", value:NaN, error:Infinity, exprJS:"-", tokens:null });
+
+  function makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existingSet){
+    const tokens = baseObj.tokens;
+    const numbers = tokens.numbers.slice();
+    const ops = tokens.ops.slice();
+    const numIndexes = [];
+    for (let i=0;i<numbers.length;i++){ if (numbers[i] !== String(luckA)) numIndexes.push(i); }
+    const opIndexes = [];
+    for (let j=0;j<ops.length;j++){ if (ops[j] !== luckB && ops[j] !== luckC) opIndexes.push(j); }
+    for (let attempt=0; attempt<80; attempt++){
+      const newNums = numbers.slice();
+      const newOps = ops.slice();
+      let changed = false;
+      if (numIndexes.length > 0 && Math.random() < 0.8){
+        const idx = pick(numIndexes);
+        const pool = NUM_POOL.filter(x => !newNums.includes(x) && x !== String(luckA));
+        if (pool.length === 0) continue;
+        newNums[idx] = pick(pool);
+        changed = true;
+      } else if (opIndexes.length > 0){
+        const j = pick(opIndexes);
+        const poolOps = ALL_OPS.filter(o => o !== newOps[j]);
+        if (poolOps.length === 0) continue;
+        newOps[j] = pick(poolOps);
+        if (!newOps.includes(luckB) || !newOps.includes(luckC)) continue;
+        changed = true;
+      }
+      if (!changed) continue;
+      if (!digitsUnique(newNums)) continue; // ✅ 改成位數檢查
+      if (!new Set(newOps).size === newOps.length) continue;
+      const expr = newNums.map((n,i)=> n + (i < newOps.length ? newOps[i] : "")).join("");
+      if (existingSet.has(expr)) continue;
+      const val = safeEval(expr);
+      if (isNaN(val)) continue;
+      return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: Math.abs(val - target), tokens: { numbers: newNums, ops: newOps } };
+    }
+    return null;
   }
-  produced.sort((a,b)=> (a.error === Infinity ? 1 : a.error) - (b.error === Infinity ? 1 : b.error));
-  return produced.slice(0,5);
-}
 
-const d0 = document.getElementById("d0");
-const d1 = document.getElementById("d1");
-const d2 = document.getElementById("d2");
-const luckAEl = document.getElementById("luckA");
-const luckBEl = document.getElementById("luckB");
-const luckCEl = document.getElementById("luckC");
-const formulaRows = document.getElementById("formulaRows");
-const errorRows = document.getElementById("errorRows");
-const regenBtn = document.getElementById("regenBtn");
-
-function initFiveRows(){
-  formulaRows.innerHTML = "";
-  errorRows.innerHTML = "";
-  for (let i=0;i<5;i++){
-    const row = document.createElement("div");
-    row.className = "row";
-    row.innerHTML = `<div class="idx">${i+1}.</div><div class="expr">-</div>`;
-    formulaRows.appendChild(row);
-    const err = document.createElement("div");
-    err.className = "err-row";
-    err.textContent = "-";
-    errorRows.appendChild(err);
+  function produceFiveVariants(baseObj, target, luckA, luckB, luckC){
+    const produced = [ { exprJS: baseObj.exprJS, exprShow: baseObj.exprShow, value: baseObj.value, error: baseObj.error, tokens: baseObj.tokens } ];
+    const existing = new Set([baseObj.exprJS]);
+    for (let i=0;i<4;i++){
+      const v = makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existing);
+      if (v){ produced.push(v); existing.add(v.exprJS); }
+      else break;
+    }
+    while (produced.length < 5){
+      produced.push({ exprShow:"-", value:NaN, error:Infinity, exprJS:"-", tokens:null });
+    }
+    produced.sort((a,b)=> (a.error === Infinity ? 1 : a.error) - (b.error === Infinity ? 1 : b.error));
+    return produced.slice(0,5);
   }
-}
 
-function fillRows(list){
-  const rows = formulaRows.querySelectorAll(".row");
-  const errRows = errorRows.querySelectorAll(".err-row");
-  for (let i=0;i<5;i++){
-    const r = rows[i];
-    const e = errRows[i];
-    const exprDiv = r.querySelector(".expr");
-    if (list[i]){
-      const text = (list[i].exprShow === "-" ? "-" : `${list[i].exprShow} = ${fmtNum(list[i].value)}`);
-      exprDiv.textContent = text;
-      e.textContent = (list[i].error === Infinity ? "-" : fmtNum(list[i].error));
-    } else {
-      exprDiv.textContent = "-";
-      e.textContent = "-";
+  const d0 = document.getElementById("d0");
+  const d1 = document.getElementById("d1");
+  const d2 = document.getElementById("d2");
+  const luckAEl = document.getElementById("luckA");
+  const luckBEl = document.getElementById("luckB");
+  const luckCEl = document.getElementById("luckC");
+  const formulaRows = document.getElementById("formulaRows");
+  const errorRows = document.getElementById("errorRows");
+  const regenBtn = document.getElementById("regenBtn");
+
+  function initFiveRows(){
+    formulaRows.innerHTML = "";
+    errorRows.innerHTML = "";
+    for (let i=0;i<5;i++){
+      const row = document.createElement("div");
+      row.className = "row";
+      row.innerHTML = `<div class="idx">${i+1}.</div><div class="expr">-</div>`;
+      formulaRows.appendChild(row);
+      const err = document.createElement("div");
+      err.className = "err-row";
+      err.textContent = "-";
+      errorRows.appendChild(err);
     }
   }
-}
 
-function regenerate(){
+  function fillRows(list){
+    const rows = formulaRows.querySelectorAll(".row");
+    const errRows = errorRows.querySelectorAll(".err-row");
+    for (let i=0;i<5;i++){
+      const r = rows[i];
+      const e = errRows[i];
+      const exprDiv = r.querySelector(".expr");
+      if (list[i]){
+        const text = (list[i].exprShow === "-" ? "-" : `${list[i].exprShow} = ${fmtNum(list[i].value)}`);
+        exprDiv.textContent = text;
+        e.textContent = (list[i].error === Infinity ? "-" : fmtNum(list[i].error));
+      } else {
+        exprDiv.textContent = "-";
+        e.textContent = "-";
+      }
+    }
+  }
+
+  function regenerate(){
+    initFiveRows();
+    const {target, luckA, luckB, luckC} = generateLuckAndTarget();
+    const s = String(target).padStart(3,"0");
+    d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
+    luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
+    const base = findBestBase(target, luckA, luckB, luckC, 1200);
+    let produced;
+    if (!base){ produced = Array.from({length:5}, ()=>({exprShow:"-", value:NaN, error:Infinity})); }
+    else { produced = produceFiveVariants(base, target, luckA, luckB, luckC); }
+    fillRows(produced);
+  }
+
   initFiveRows();
-  const {target, luckA, luckB, luckC} = generateLuckAndTarget();
-  const s = String(target).padStart(3,"0");
-  d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
-  luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
-  const base = findBestBase(target, luckA, luckB, luckC, 1200);
-  let produced;
-  if (!base){ produced = Array.from({length:5}, ()=>({exprShow:"-", value:NaN, error:Infinity})); }
-  else { produced = produceFiveVariants(base, target, luckA, luckB, luckC); }
-  fillRows(produced);
-}
-
-initFiveRows();
-regenerate();
-regenBtn.addEventListener("click", regenerate);
+  regenerate();
+  regenBtn.addEventListener("click", regenerate);
 </script>
 </body>
 </html>
