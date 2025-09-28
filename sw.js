@@ -6,7 +6,9 @@ const urlsToCache = [
   './manifest.json',
   './icons/icon-192x192.png',
   './icons/icon-512x512.png'
-  // 若有其他外部腳本或樣式，也請加入此處
+  // 由於你的程式碼都是內嵌在 index.html 裡，
+  // 所以你只需要確保這幾個檔案被快取即可。
+  // 如果未來有其他獨立的 .js 或 .css 檔案，記得要加進來。
 ];
 
 // 安裝 Service Worker 並快取所有檔案
@@ -15,6 +17,7 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('Opened cache');
+        // 使用 cache.addAll() 確保所有檔案都被加入
         return cache.addAll(urlsToCache);
       })
   );
@@ -29,6 +32,7 @@ self.addEventListener('fetch', (event) => {
         if (response) {
           return response;
         }
+        
         // 若快取中沒有，則進行網路請求
         return fetch(event.request).then(
             (response) => {
@@ -46,7 +50,13 @@ self.addEventListener('fetch', (event) => {
 
                 return response;
             }
-        );
+        ).catch(() => {
+            // 如果網路請求失敗（離線），且快取中找不到檔案，
+            // 則返回一個備用頁面或錯誤回應。
+            // 由於你的應用是單一檔案，這個步驟通常不是必需的，
+            // 但如果有多頁面，則可以返回一個離線頁面。
+            // return caches.match('/offline.html');
+        });
       })
   );
 });
