@@ -117,6 +117,18 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
 .modal-actions .ok { background:#7fb8ff; color:#fff; }
 .modal-actions .cancel { background:#aaa; color:#fff; }
 
+/* 新增：運算中提示 */
+.loading-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: none; align-items: center; justify-content: center;
+  z-index: 1000;
+}
+.loading-overlay span {
+  color: #fff; font-size: 24px; font-weight: 600;
+  background: rgba(0, 0, 0, 0.6); padding: 12px 24px; border-radius: 8px;
+}
+
 @media (max-width:980px){
   .wrap{padding:10px;}
   .formula-card{flex-direction:column; gap:12px; border-radius:18px;}
@@ -128,8 +140,8 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
   .top-row { flex-direction: column; align-items: stretch; gap: 12px; }
   .card { width:100%; min-width:unset; }
   .button {
-    width: auto;       /* 自動依文字大小 */
-    min-width: 100px;  /* 至少有一點大小，不要太窄 */
+    width: auto;
+    min-width: 100px;
     padding: 10px 16px;
     font-size: 16px;
   }
@@ -199,6 +211,11 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
   </div>
 </div>
 
+<!-- 新增：運算中提示 -->
+<div class="loading-overlay" id="loadingOverlay">
+  <span>運算中...</span>
+</div>
+
 <script>
 
 if ('serviceWorker' in navigator) {
@@ -212,24 +229,46 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-/* --- 保留原本所有程式邏輯 --- */
+/* ---------- 工具與原本共用函式（保留風格） ---------- */
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function shuffle(arr){ const a=arr.slice(); for (let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]];} return a; }
+
 const OPS_SHOW = {"*":"×","/":"÷","+":"＋","-":"－"};
 const ALL_OPS = ["+","-","*","/"];
 const MUL_DIV = ["*","/"];
 const ADD_SUB = ["+","-"];
-function safeEval(expr){ if ( /\/\s*0(?![0-9])/g.test(expr) ) return NaN; try { const v = eval(expr); if (typeof v === "number" && isFinite(v)) return v; } catch(e){} return NaN; }
-function fmtNum(x){ if (x===null || isNaN(x)) return "-"; if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x)); return (Math.round(x*100)/100).toFixed(2); }
+
+// 安全運算（防 /0 與非數）
+function safeEval(expr){
+  if ( /\/\s*0(?![0-9])/g.test(expr) ) return NaN;
+  try {
+    const v = Function('"use strict";return ('+expr+')')();
+    if (typeof v === "number" && isFinite(v)) return v;
+  } catch(e){}
+  return NaN;
+}
+function fmtNum(x){
+  if (x===null || isNaN(x)) return "-";
+  if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
+  return (Math.round(x*100)/100).toFixed(2);
+}
+
+/* 數字候選池 (0-9, 10-99) */
 const ONE = Array.from({length:10},(_,i)=>String(i));
-const TWO = Array.from({length:90}, (_,i)=>String(i+10));
+const TWO = Array.from({length:90},(_,i)=>String(i+10));
 const NUM_POOL = ONE.concat(TWO);
 
-function digitsUnique(numbers) {
+/* 檢查：一個公式內的數字 token 不可重複（token 層），且數字位元（每個字元）也不可重複（位元層）
+   根據你的要求同時檢查兩者 */
+function tokensUnique(nums, ops){
+  const numsSet = new Set(nums);
+  if (numsSet.size !== nums.length) return false;
+  const opsSet = new Set(ops);
+  if (opsSet.size !== ops.length) return false;
   const seen = new Set();
-  for (let n of numbers) {
-    for (let ch of n) {
+  for (const n of nums){
+    for (const ch of n){
       if (seen.has(ch)) return false;
       seen.add(ch);
     }
@@ -237,124 +276,343 @@ function digitsUnique(numbers) {
   return true;
 }
 
-function generateLuckAndTarget(){
-  const target = randInt(100,999);
-  const luckA = String(randInt(0,9));
-  const luckB = pick(MUL_DIV);
-  const luckC = pick(ADD_SUB);
-  return {target, luckA, luckB, luckC};
-}
-
-function makeCandidateTokens(luckA, luckB, luckC){
-  const numbersCount = pick([3,4,5]);
-  const pool = NUM_POOL.filter(x=>x !== luckA);
-  const chosenNums = [luckA];
-  const shuffledPool = shuffle(pool);
-  for (let p of shuffledPool){
-    if (chosenNums.length >= numbersCount) break;
-    if (!chosenNums.includes(p)) chosenNums.push(p);
-  }
-  if (chosenNums.length < numbersCount) return null;
-  const opsCount = numbersCount - 1;
-  if (opsCount < 2) return null;
-  let ops = [luckB, luckC];
-  if (opsCount > ops.length){
-    const extras = ALL_OPS.filter(o=>!ops.includes(o));
-    const take = shuffle(extras).slice(0, opsCount - ops.length);
-    ops = ops.concat(take);
-  }
-  if (!digitsUnique(chosenNums)) return null;
-  if (!new Set(ops).size === ops.length) return null;
-  const numsShuffled = shuffle(chosenNums);
-  const opsShuffled = shuffle(ops);
-  let exprJS = "";
-  for (let i=0;i<numsShuffled.length;i++){
-    exprJS += numsShuffled[i];
-    if (i < opsShuffled.length) exprJS += opsShuffled[i];
-  }
-  return { numbers: numsShuffled, ops: opsShuffled, exprJS };
-}
-
-function evalCandidateTokens(tokens){
-  const expr = tokens.numbers.map((n,i)=> n + (i < tokens.ops.length ? tokens.ops[i] : "")).join("");
-  const val = safeEval(expr);
-  if (isNaN(val)) return null;
-  return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val };
-}
-
-function findBestBase(target, luckA, luckB, luckC, trials=1200){
-  const seen = new Set();
-  const candidates = [];
-  for (let i=0;i<trials;i++){
-    const tokens = makeCandidateTokens(luckA, luckB, luckC);
-    if (!tokens) continue;
-    if (seen.has(tokens.exprJS)) continue;
-    seen.add(tokens.exprJS);
-    const evald = evalCandidateTokens(tokens);
-    if (!evald) continue;
-    evald.tokens = tokens;
-    evald.error = Math.abs(evald.value - target);
-    candidates.push(evald);
-  }
-  if (candidates.length === 0) return null;
-  candidates.sort((a,b)=> a.error - b.error);
-  return candidates[0];
-}
-
-function makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existingSet){
-  const tokens = baseObj.tokens;
-  const numbers = tokens.numbers.slice();
-  const ops = tokens.ops.slice();
-  const numIndexes = [];
-  for (let i=0;i<numbers.length;i++){ if (numbers[i] !== String(luckA)) numIndexes.push(i); }
-  const opIndexes = [];
-  for (let j=0;j<ops.length;j++){ if (ops[j] !== luckB && ops[j] !== luckC) opIndexes.push(j); }
-  for (let attempt=0; attempt<80; attempt++){
-    const newNums = numbers.slice();
-    const newOps = ops.slice();
-    let changed = false;
-    if (numIndexes.length > 0 && Math.random() < 0.8){
-      const idx = pick(numIndexes);
-      const pool = NUM_POOL.filter(x => !newNums.includes(x) && x !== String(luckA));
-      if (pool.length === 0) continue;
-      newNums[idx] = pick(pool);
-      changed = true;
-    } else if (opIndexes.length > 0){
-      const j = pick(opIndexes);
-      const poolOps = ALL_OPS.filter(o => o !== newOps[j]);
-      if (poolOps.length === 0) continue;
-      newOps[j] = pick(poolOps);
-      if (!newOps.includes(luckB) || !newOps.includes(luckC)) continue;
-      changed = true;
+/* permutations */
+function permutations(arr){
+  const res = [];
+  (function perm(a,l){
+    if(l===a.length){ res.push(a.slice()); return; }
+    for(let i=l;i<a.length;i++){
+      [a[l],a[i]]=[a[i],a[l]];
+      perm(a,l+1);
+      [a[l],a[i]]=[a[i],a[l]];
     }
-    if (!changed) continue;
-    if (!digitsUnique(newNums)) continue;
-    if (!new Set(newOps).size === newOps.length) continue;
-    const expr = newNums.map((n,i)=> n + (i < newOps.length ? newOps[i] : "")).join("");
-    if (existingSet.has(expr)) continue;
-    const val = safeEval(expr);
-    if (isNaN(val)) continue;
-    return { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: Math.abs(val - target), tokens: { numbers: newNums, ops: newOps } };
+  })(arr.slice(),0);
+  return res;
+}
+
+/* ---------- 精確搜尋：優先 n=3（完全窮舉），再嘗試 n=4（有限制範圍），移除 n=5 ---------- */
+const EPS = 1e-9;
+
+// n=3 完全窮舉（包含 A），速度快、搜索空間小，優先嘗試
+function findExactN3(target, luckA, luckB, luckC){
+  const A = String(luckA);
+  const pool = NUM_POOL.filter(x=> x !== A);
+  for (let i=0;i<pool.length;i++){
+    for (let j=i+1;j<pool.length;j++){
+      const nums = [A, pool[i], pool[j]];
+      if (!tokensUnique(nums, [luckB, luckC])) continue;
+      const perms = permutations(nums);
+      const opsOrders = [
+        [luckB, luckC],
+        [luckC, luckB]
+      ];
+      for (const p of perms){
+        for (const ops of opsOrders){
+          if (new Set(ops).size !== ops.length) continue;
+          const expr = `${p[0]}${ops[0]}${p[1]}${ops[1]}${p[2]}`;
+          const val = safeEval(expr);
+          if (isNaN(val)) continue;
+          if (Math.abs(val - target) < EPS) {
+            return {
+              exprJS: expr,
+              exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'),
+              value: val,
+              error: 0,
+              tokens: { numbers: p.slice(), ops: ops.slice() }
+            };
+          }
+        }
+      }
+    }
   }
   return null;
 }
 
-function produceFiveVariants(baseObj, target, luckA, luckB, luckC){
-  const produced = [ { exprJS: baseObj.exprJS, exprShow: baseObj.exprShow, value: baseObj.value, error: baseObj.error, tokens: baseObj.tokens } ];
-  const existing = new Set([baseObj.exprJS]);
-  for (let i=0;i<4;i++){
-    const v = makeVariantFromBase(baseObj, target, luckA, luckB, luckC, existing);
-    if (v){ produced.push(v); existing.add(v.exprJS); }
-    else break;
+/* n=4：受限範圍內窮舉，縮減搜索空間 */
+function findExactN4(target, luckA, luckB, luckC, maxChecks = 100000){
+  const smallPool = NUM_POOL.filter(s => parseInt(s) <= 30);
+  const extraPool = NUM_POOL.filter(s => parseInt(s) > 30).slice(0,10);
+  const pool = smallPool.concat(extraPool).filter(x => x !== String(luckA));
+  const combos = [];
+  function combRec(start,arr){
+    if (arr.length === 3){ combos.push(arr.slice()); return; }
+    for (let i=start;i<pool.length;i++){
+      arr.push(pool[i]);
+      combRec(i+1,arr);
+      arr.pop();
+      if (combos.length > 5000) return;
+    }
   }
+  combRec(0,[]);
+  let checks = 0;
+  for (const c of combos){
+    const numsSet = [String(luckA)].concat(c);
+    if (!tokensUnique(numsSet, ALL_OPS.slice(0,3))) continue;
+    const perms = permutations(numsSet);
+    for (const p of perms){
+      const opsChoices = [];
+      function opsRec(start,arr){
+        if (arr.length === 3){
+          if (arr.includes(luckB) && arr.includes(luckC) && (new Set(arr).size === arr.length)){
+            opsChoices.push(arr.slice());
+          }
+          return;
+        }
+        for (let t=start;t<ALL_OPS.length;t++){
+          arr.push(ALL_OPS[t]);
+          opsRec(t+1,arr);
+          arr.pop();
+        }
+        if (opsChoices.length > 50) return;
+      }
+      opsRec(0,[]);
+      for (const opsSet of opsChoices){
+        const opsPerms = permutations(opsSet);
+        for (const ops of opsPerms){
+          if (!tokensUnique(p, ops)) continue;
+          let expr = "";
+          for (let idx=0; idx<p.length; idx++){
+            expr += p[idx];
+            if (idx < ops.length) expr += ops[idx];
+          }
+          const val = safeEval(expr);
+          checks++;
+          if (!isNaN(val) && Math.abs(val - target) < EPS){
+            return {
+              exprJS: expr,
+              exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'),
+              value: val,
+              error: 0,
+              tokens: { numbers: p.slice(), ops: ops.slice() }
+            };
+          }
+          if (checks > maxChecks) return null;
+        }
+      }
+      if (checks > maxChecks) break;
+    }
+    if (checks > maxChecks) break;
+  }
+  return null;
+}
+
+/* findExact: 由 n=3 開始，若找不到則嘗試 n=4，移除 n=5 */
+function findExactFormula(target, luckA, luckB, luckC){
+  const r3 = findExactN3(target, luckA, luckB, luckC);
+  if (r3) return r3;
+  const r4 = findExactN4(target, luckA, luckB, luckC, 100000);
+  if (r4) return r4;
+  return null;
+}
+
+/* ---------- 回退：若找不到精確解，使用近似 / 局部精修（優化搜索效率） ---------- */
+function refineFormula(formulaObj, target, luckA, luckB, luckC){
+  let best = {
+    exprJS: formulaObj.exprJS,
+    exprShow: formulaObj.exprShow,
+    value: formulaObj.value,
+    error: Math.abs(formulaObj.value - target),
+    tokens: {
+      numbers: formulaObj.tokens.numbers.slice(),
+      ops: formulaObj.tokens.ops.slice()
+    }
+  };
+  const MAX_ITERS = 4; // 減少迭代次數
+  const NEIGHBOR_RANGE = 10; // 縮減鄰域範圍
+  for (let iter=0; iter<MAX_ITERS; iter++){
+    let improved = false;
+    let candidateBest = null;
+    const nums = best.tokens.numbers.map(s=>String(s));
+    const ops = best.tokens.ops.slice();
+
+    for (let i=0;i<nums.length;i++){
+      if (nums[i] === String(luckA)) continue;
+      const cur = parseInt(nums[i]);
+      const minV = Math.max(0, cur - NEIGHBOR_RANGE);
+      const maxV = Math.min(99, cur + NEIGHBOR_RANGE);
+      for (let v=minV; v<=maxV; v++){
+        if (v === cur) continue;
+        const sV = String(v);
+        if (!NUM_POOL.includes(sV) || nums.includes(sV)) continue;
+        const tempNums = nums.slice(); tempNums[i]=sV;
+        if (!tokensUnique(tempNums, ops)) continue;
+        const expr = tempNums.map((n,j)=> n + (j<ops.length?ops[j]:"")).join("");
+        const val = safeEval(expr);
+        if (isNaN(val)) continue;
+        const err = Math.abs(val - target);
+        if (err < best.error && (!candidateBest || err < candidateBest.error)){
+          candidateBest = {
+            exprJS: expr,
+            exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'),
+            value: val,
+            error: err,
+            tokens: { numbers: tempNums.slice(), ops: ops.slice() }
+          };
+        }
+      }
+    }
+
+    for (let j=0;j<ops.length;j++){
+      if (ops[j] === luckB || ops[j] === luckC) continue;
+      for (const candidateOp of ALL_OPS){
+        if (candidateOp === ops[j]) continue;
+        const newOps = ops.slice(); newOps[j] = candidateOp;
+        if (new Set(newOps).size !== newOps.length) continue;
+        if (!newOps.includes(luckB) || !newOps.includes(luckC)) continue;
+        const expr = best.tokens.numbers.map((n,k)=> n + (k<newOps.length?newOps[k]:"")).join("");
+        const val = safeEval(expr);
+        if (isNaN(val)) continue;
+        const err = Math.abs(val - target);
+        if (err < best.error && (!candidateBest || err < candidateBest.error)){
+          candidateBest = { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: err, tokens: { numbers: best.tokens.numbers.slice(), ops: newOps.slice() } };
+        }
+      }
+    }
+
+    if (candidateBest && candidateBest.error < best.error){ best = candidateBest; improved = true; }
+    if (!improved) break;
+  }
+  return best;
+}
+
+function findBestApproxBase(target, luckA, luckB, luckC, trials=2000){
+  const seen = new Set();
+  const candidates = [];
+  const pool = NUM_POOL.filter(x=> x !== String(luckA));
+  for (let i=0;i<trials;i++){
+    const numbersCount = pick([3,4]);
+    const chosen = [String(luckA)];
+    const shuffledPool = shuffle(pool);
+    for (const p of shuffledPool){
+      if (chosen.length >= numbersCount) break;
+      if (!chosen.includes(p)) chosen.push(p);
+    }
+    if (chosen.length < numbersCount) continue;
+    const opsCount = numbersCount - 1;
+    if (opsCount < 2) continue;
+    const ops = [luckB, luckC];
+    if (opsCount > ops.length){
+      const extras = ALL_OPS.filter(o=> !ops.includes(o));
+      const take = shuffle(extras).slice(0, opsCount - ops.length);
+      ops.push(...take);
+    }
+    if (new Set(ops).size !== ops.length) continue;
+    const numsShuffled = shuffle(chosen);
+    const opsShuffled = shuffle(ops);
+    if (!tokensUnique(numsShuffled, opsShuffled)) continue;
+    const expr = numsShuffled.map((n,i)=> n + (i < opsShuffled.length ? opsShuffled[i] : "")).join("");
+    if (seen.has(expr)) continue;
+    seen.add(expr);
+    const val = safeEval(expr);
+    if (isNaN(val)) continue;
+    const err = Math.abs(val - target);
+    if (err <= 10) {
+      const ev = { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: err, tokens: { numbers: numsShuffled.slice(), ops: opsShuffled.slice() } };
+      candidates.push(ev);
+    }
+  }
+
+  if (candidates.length === 0) return null;
+  candidates.sort((a,b)=> a.error - b.error);
+  const topK = Math.min(50, candidates.length);
+  const refined = [];
+  for (let i=0;i<topK;i++){
+    refined.push(refineFormula(candidates[i], target, luckA, luckB, luckC));
+  }
+  refined.sort((a,b)=> a.error - b.error);
+  return refined[0];
+}
+
+/* ---------- 從 base 產生 5 個變體（以 base 為中心變化、保證不重複 token） ---------- */
+function produceFiveFromBase(baseObj, target, luckA, luckB, luckC){
+  const produced = [];
+  const existing = new Set();
+  if (baseObj){
+    produced.push(baseObj);
+    existing.add(baseObj.exprJS);
+  }
+
+  const attemptsLimit = 5000;
+  let attempts = 0;
+  while (produced.length < 5 && attempts < attemptsLimit){
+    attempts++;
+    const src = produced[0] || baseObj;
+    if (!src) break;
+
+    const nums = src.tokens.numbers.slice();
+    const ops = src.tokens.ops.slice();
+
+    if (Math.random() < 0.75){
+      const choices = [];
+      for (let i=0;i<nums.length;i++) if (nums[i] !== String(luckA)) choices.push(i);
+      if (choices.length === 0) continue;
+      const idx = pick(choices);
+      const cur = parseInt(nums[idx]);
+      const candList = [];
+      const minV = Math.max(0, cur - 10);
+      const maxV = Math.min(99, cur + 10);
+      for (let v=minV; v<=maxV; v++) if (v !== cur) candList.push(String(v));
+      const extras = shuffle(NUM_POOL).slice(0,15);
+      for (const e of extras) if (!candList.includes(e)) candList.push(e);
+
+      let made = false;
+      for (const cand of candList){
+        if (nums.includes(cand)) continue;
+        const tmpNums = nums.slice(); tmpNums[idx] = cand;
+        if (!tokensUnique(tmpNums, ops)) continue;
+        const expr = tmpNums.map((n,i)=> n + (i<ops.length?ops[i]:"")).join("");
+        if (existing.has(expr)) continue;
+        const val = safeEval(expr);
+        if (isNaN(val)) continue;
+        const candidate = refineFormula({ exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: Math.abs(val-target), tokens: { numbers: tmpNums.slice(), ops: ops.slice() } }, target, luckA, luckB, luckC);
+        if (existing.has(candidate.exprJS)) continue;
+        if (candidate.error <= 10) {
+          produced.push(candidate);
+          existing.add(candidate.exprJS);
+          made = true;
+          break;
+        }
+      }
+      if (!made) continue;
+    } else {
+      const opIdxs = [];
+      for (let j=0;j<ops.length;j++) if (ops[j] !== luckB && ops[j] !== luckC) opIdxs.push(j);
+      if (opIdxs.length === 0) continue;
+      const j = pick(opIdxs);
+      for (const candidateOp of ALL_OPS){
+        if (candidateOp === ops[j]) continue;
+        const newOps = ops.slice(); newOps[j] = candidateOp;
+        if (new Set(newOps).size !== newOps.length) continue;
+        if (!newOps.includes(luckB) || !newOps.includes(luckC)) continue;
+        const expr = nums.map((n,i)=> n + (i<newOps.length?newOps[i]:"")).join("");
+        if (existing.has(expr)) continue;
+        const val = safeEval(expr);
+        if (isNaN(val)) continue;
+        const candidate = refineFormula({ exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: Math.abs(val-target), tokens: { numbers: nums.slice(), ops: newOps.slice() } }, target, luckA, luckB, luckC);
+        if (existing.has(candidate.exprJS)) continue;
+        if (candidate.error <= 10) {
+          produced.push(candidate);
+          existing.add(candidate.exprJS);
+          break;
+        }
+      }
+    }
+  }
+
   while (produced.length < 5){
-    produced.push({ exprShow:"-", value:NaN, error:Infinity, exprJS:"-", tokens:null });
+    const newBase = findBestApproxBase(target, luckA, luckB, luckC, 1000);
+    if (!newBase) continue;
+    if (existing.has(newBase.exprJS)) continue;
+    if (newBase.error <= 10) {
+      produced.push(newBase);
+      existing.add(newBase.exprJS);
+    }
   }
-  produced.sort((a,b)=> (a.error === Infinity ? 1 : a.error) - (b.error === Infinity ? 1 : b.error));
+  produced.sort((a,b)=> a.error - b.error);
   return produced.slice(0,5);
 }
 
-/* --- DOM 元件 --- */
+/* ---------- UI 與主流程（保持你原本的 DOM ID 與使用者互動不變） ---------- */
 const d0 = document.getElementById("d0");
 const d1 = document.getElementById("d1");
 const d2 = document.getElementById("d2");
@@ -372,6 +630,7 @@ const manualB = document.getElementById("manualB");
 const manualC = document.getElementById("manualC");
 const manualOk = document.getElementById("manualOk");
 const manualCancel = document.getElementById("manualCancel");
+const loadingOverlay = document.getElementById("loadingOverlay");
 
 function initFiveRows(){
   formulaRows.innerHTML = "";
@@ -379,12 +638,9 @@ function initFiveRows(){
   for (let i=0;i<5;i++){
     const row = document.createElement("div");
     row.className="row";
-    row.innerHTML = `<div class="idx">${i+1}</div><div class="expr" id="expr${i}">-</div>`;
+    row.innerHTML = `<div class="idx">${i+1}.</div><div class="expr" id="expr${i}">-</div>`;
     formulaRows.appendChild(row);
-    const er = document.createElement("div");
-    er.className="err-row";
-    er.id = "err"+i;
-    er.textContent="-";
+    const er = document.createElement("div"); er.className="err-row"; er.id = "err"+i; er.textContent="-";
     errorRows.appendChild(er);
   }
 }
@@ -393,43 +649,89 @@ function fillRows(arr){
     const exprDiv = document.getElementById("expr"+i);
     const errDiv = document.getElementById("err"+i);
     if (!arr[i] || arr[i].exprShow === "-"){
-      exprDiv.textContent="-";
-      errDiv.textContent="-";
+      exprDiv.textContent = "-";
+      errDiv.textContent = "-";
     } else {
-      exprDiv.textContent = arr[i].exprShow;
+      exprDiv.textContent = `${arr[i].exprShow} = ${fmtNum(arr[i].value)}`;
       errDiv.textContent = (arr[i].error === Infinity) ? "-" : fmtNum(arr[i].error);
     }
   }
 }
 
-function regenerate(){
-  const {target, luckA, luckB, luckC} = generateLuckAndTarget();
-  const s = String(target).padStart(3,"0");
-  d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
-  luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
-  const base = findBestBase(target, luckA, luckB, luckC, 1200);
-  let produced;
-  if (base){ produced = produceFiveVariants(base, target, luckA, luckB, luckC); }
-  else {
-    produced = Array(5).fill({exprShow:"-", value:NaN, error:Infinity});
-  }
-  fillRows(produced);
-}
-function regenerateCustom(target, luckA, luckB, luckC){
-  const s = String(target).padStart(3,"0");
-  d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
-  luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
-  const base = findBestBase(target, luckA, luckB, luckC, 1200);
-  let produced;
-  if (base){ produced = produceFiveVariants(base, target, luckA, luckB, luckC); }
-  else {
-    produced = Array(5).fill({exprShow:"-", value:NaN, error:Infinity});
-  }
-  fillRows(produced);
+/* 隨機產題（外部介面） */
+function generateLuckAndTarget(){
+  const target = randInt(100,999);
+  const luckA = String(randInt(0,9));
+  const luckB = pick(MUL_DIV);
+  const luckC = pick(ADD_SUB);
+  return { target, luckA, luckB, luckC };
 }
 
-/* --- 綁定 --- */
-regenBtn.addEventListener("click", regenerate);
+/* 主生成流程：先找 exact（n=3->4），若找不到 exact 再用 approximate base */
+function regenerate(){
+  loadingOverlay.style.display = "flex";
+  initFiveRows();
+  const { target, luckA, luckB, luckC } = generateLuckAndTarget();
+  const s = String(target).padStart(3,"0");
+  d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
+  luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
+
+  let base = findExactFormula(target, luckA, luckB, luckC);
+  if (base){
+    const produced = produceFiveFromBase(base, target, luckA, luckB, luckC);
+    fillRows(produced);
+    setTimeout(() => { loadingOverlay.style.display = "none"; }, 300);
+    return;
+  }
+
+  const approxBase = findBestApproxBase(target, luckA, luckB, luckC, 2000);
+  if (!approxBase){
+    const fallbackBase = findBestApproxBase(target, luckA, luckB, luckC, 3000);
+    const produced = produceFiveFromBase(fallbackBase, target, luckA, luckB, luckC);
+    fillRows(produced);
+    setTimeout(() => { loadingOverlay.style.display = "none"; }, 300);
+    return;
+  }
+  const produced = produceFiveFromBase(approxBase, target, luckA, luckB, luckC);
+  fillRows(produced);
+  setTimeout(() => { loadingOverlay.style.display = "none"; }, 300);
+}
+
+/* 手動自訂的流程 */
+function regenerateCustom(target, luckA, luckB, luckC){
+  loadingOverlay.style.display = "flex";
+  initFiveRows();
+  const s = String(target).padStart(3,"0");
+  d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
+  luckAEl.textContent = String(luckA); luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
+
+  let base = findExactFormula(target, luckA, luckB, luckC);
+  if (base){
+    const produced = produceFiveFromBase(base, target, luckA, luckB, luckC);
+    fillRows(produced);
+    setTimeout(() => { loadingOverlay.style.display = "none"; }, 300);
+    return;
+  }
+  const approxBase = findBestApproxBase(target, luckA, luckB, luckC, 2000);
+  if (!approxBase){
+    const fallbackBase = findBestApproxBase(target, luckA, luckB, luckC, 3000);
+    const produced = produceFiveFromBase(fallbackBase, target, luckA, luckB, luckC);
+    fillRows(produced);
+    setTimeout(() => { loadingOverlay.style.display = "none"; }, 300);
+    return;
+  }
+  const produced = produceFiveFromBase(approxBase, target, luckA, luckB, luckC);
+  fillRows(produced);
+  setTimeout(() => { loadingOverlay.style.display = "none"; }, 300);
+}
+
+/* 綁定 UI 行為（保留原本按鈕行為） */
+initFiveRows();
+regenerate();
+regenBtn.addEventListener("click", () => {
+  loadingOverlay.style.display = "flex";
+  setTimeout(regenerate, 0);
+});
 manualBtn.addEventListener("click", ()=> { modal.style.display="flex"; });
 manualCancel.addEventListener("click", ()=> { modal.style.display="none"; });
 manualOk.addEventListener("click", ()=>{
@@ -439,13 +741,10 @@ manualOk.addEventListener("click", ()=>{
   const c = manualC.value;
   if (!t || t<100 || t>999){ alert("目標數字必須 100~999"); return; }
   if (a==="" || a<0 || a>9){ alert("幸運方塊 A 必須 0~9"); return; }
-  regenerateCustom(t,String(a),b,c);
+  loadingOverlay.style.display = "flex";
+  setTimeout(() => regenerateCustom(t,String(a),b,c), 0);
   modal.style.display="none";
 });
-
-/* --- 初始化 --- */
-initFiveRows();
-regenerate();
 </script>
 </body>
 </html>
