@@ -220,7 +220,7 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
 
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('./sw.js')
       .then((registration) => {
         console.log('Service Worker registered! Scope: ', registration.scope);
       })
@@ -351,7 +351,7 @@ function findExactN4(target, luckA, luckB, luckC, maxChecks = 100000){
     const perms = permutations(numsSet);
     for (const p of perms){
       const opsChoices = [];
-      function opsRec(start,arr){
+      const opsRec = (start,arr) => {
         if (arr.length === 3){
           if (arr.includes(luckB) && arr.includes(luckC) && (new Set(arr).size === arr.length)){
             opsChoices.push(arr.slice());
@@ -364,7 +364,7 @@ function findExactN4(target, luckA, luckB, luckC, maxChecks = 100000){
           arr.pop();
         }
         if (opsChoices.length > 50) return;
-      }
+      };
       opsRec(0,[]);
       for (const opsSet of opsChoices){
         const opsPerms = permutations(opsSet);
@@ -599,7 +599,9 @@ function produceFiveFromBase(baseObj, target, luckA, luckB, luckC){
     }
   }
 
-  while (produced.length < 5){
+  let fallbackAttempts = 0;
+  while (produced.length < 5 && fallbackAttempts < 20){
+    fallbackAttempts++;
     const newBase = findBestApproxBase(target, luckA, luckB, luckC, 1000);
     if (!newBase) continue;
     if (existing.has(newBase.exprJS)) continue;

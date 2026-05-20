@@ -51,11 +51,7 @@ self.addEventListener('fetch', (event) => {
                 return response;
             }
         ).catch(() => {
-            // 如果網路請求失敗（離線），且快取中找不到檔案，
-            // 則返回一個備用頁面或錯誤回應。
-            // 由於你的應用是單一檔案，這個步驟通常不是必需的，
-            // 但如果有多頁面，則可以返回一個離線頁面。
-            // return caches.match('/offline.html');
+            return new Response('Network error', { status: 503, statusText: 'Service Unavailable' });
         });
       })
   );
