@@ -4,150 +4,270 @@
 <meta charset="utf-8" />
 <title>幸運公式產生器</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<meta name="theme-color" content="#f6d8ad" />
+<meta name="theme-color" content="#0a0a1a" />
 <link rel="manifest" href="manifest.json" />
 <link rel="apple-touch-icon" href="icons/icon-192x192.png" />
 <style>
-:root{ 
-  --bg:#ffffff; --panel:#f6d8ad; --accent:#7fb8ff; 
-  --card-shadow: rgba(0,0,0,0.12); 
-  --font: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif; 
+:root{
+  --glass: rgba(255,255,255,0.06);
+  --glass-border: rgba(255,255,255,0.13);
+  --cyan: #00d4ff;
+  --purple: #a855f7;
+  --pink: #ff6b9d;
+  --gold: #fbbf24;
+  --text: #e0e0f0;
+  --text-dim: rgba(255,255,255,0.48);
+  --font: "Microsoft JhengHei", "Noto Sans TC", Arial, sans-serif;
 }
 html,body{
-  height:100%; margin:0;
-  background:var(--bg); font-family:var(--font);
-  overflow:hidden;
+  min-height:100%; margin:0;
+  background: radial-gradient(ellipse at 20% 20%, #1a0a3e 0%, #0a0a1a 55%, #001830 100%);
+  font-family:var(--font);
+  overflow-x:hidden; overflow-y:auto;
+  color:var(--text);
 }
-.wrap{ 
-  max-width:1100px; margin:0 auto; padding:16px; box-sizing:border-box;
-  height:100vh; display:flex; flex-direction:column;
-}
-h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
-
-/* 上方卡片列 */
-.top-row{ display:flex; gap:18px; justify-content:center; align-items:center; }
-.card{ 
-  background:var(--panel); border-radius:14px; padding:14px 20px; 
-  box-shadow:0 6px 12px var(--card-shadow); 
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  min-width:160px; min-height:120px;
-}
-.target-card{ gap:12px; }
-#targetDigits { display:flex; gap:8px; justify-content:center; }
-.digit, .lucky-token {
-  width:60px; height:60px; border-radius:10px;
-  background:var(--accent); color:#fff;
-  display:flex; align-items:center; justify-content:center;
-  font-size:26px; font-weight:800;
-  box-shadow:0 3px 0 rgba(0,0,0,0.06);
-}
-.lucky-card{ text-align:center; }
-.lucky-title{ font-size:15px; font-weight:600; color:#333; margin-bottom:10px; }
-
-/* 公式區 */
-.mid { 
-  margin:18px auto 10px; 
-  width:100%; 
-  display:flex; 
-  justify-content:center; 
-}
-.formula-card { 
-  width:100%; 
-  max-width:720px;
-  background:var(--panel); 
-  border-radius:20px; 
-  padding:16px; 
-  box-shadow:0 6px 12px var(--card-shadow); 
-  box-sizing:border-box; 
-  display:flex; 
-  gap:12px; 
-  align-items:flex-start; 
-}
-.left { flex:1; }
-.right { width:90px; flex:0 0 90px; text-align:center; }
-.left h3, .right h3 { 
-  margin:0 0 6px 0; 
-  font-size:18px; 
-  color:#111; 
-}
-.rows { display:flex; flex-direction:column; gap:6px; }
-.row { 
-  display:grid; 
-  grid-template-columns: 24px 1fr; 
-  align-items:center; 
-  gap:6px; 
-  padding:4px 2px; 
-  border-radius:6px; 
-  min-height:26px; 
-  background:transparent; 
-}
-.row .idx { font-weight:700; color:#222; font-size:16px; }
-.row .expr { font-size:16px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#0c0c0c; }
-.right .err-row { 
-  height:26px; 
-  display:flex; 
-  align-items:center; 
-  justify-content:center;
-  font-weight:700; 
-  color:#b23d00; 
-  font-size:16px;
-}
-
-/* 底部按鈕 */
-.bottom { display:flex; justify-content:center; gap:12px; margin-top:auto; padding-top:6px; }
-.btn { background:#7fb8ff; color:#fff; border:none; padding:12px 26px; font-size:18px; border-radius:12px; cursor:pointer; box-shadow:0 8px 12px rgba(0,0,0,0.08); }
-
-/* 手動改題彈窗 */
-#manualModal {
+body::before{
+  content:'';
   position:fixed; top:0; left:0; right:0; bottom:0;
-  background:rgba(0,0,0,0.5);
-  display:none; align-items:center; justify-content:center;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+  background-size:44px 44px;
+  pointer-events:none; z-index:0;
 }
-.modal-content {
-  background:#fff; padding:20px; border-radius:12px;
-  max-width:300px; width:100%;
-  display:flex; flex-direction:column; gap:12px;
+.wrap{
+  max-width:1100px; margin:0 auto; padding:16px; box-sizing:border-box;
+  min-height:100vh; height:auto; display:flex; flex-direction:column;
+  position:relative; z-index:1;
 }
-.modal-content label { font-size:14px; font-weight:600; }
-.modal-content input, .modal-content select {
-  padding:6px; font-size:16px; border-radius:6px; border:1px solid #ccc;
+h1{
+  text-align:center; margin:6px 0 14px; font-size:26px; font-weight:900;
+  letter-spacing:3px;
+  background: linear-gradient(90deg, var(--cyan) 0%, var(--purple) 50%, var(--pink) 100%);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  background-clip:text;
+  filter:drop-shadow(0 0 18px rgba(0,212,255,0.35));
 }
-.modal-actions { display:flex; justify-content:flex-end; gap:10px; }
-.modal-actions button { padding:6px 14px; border:none; border-radius:6px; cursor:pointer; }
-.modal-actions .ok { background:#7fb8ff; color:#fff; }
-.modal-actions .cancel { background:#aaa; color:#fff; }
 
-/* 新增：運算中提示 */
-.loading-overlay {
-  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.4);
-  display: none; align-items: center; justify-content: center;
-  z-index: 1000;
+/* ── Cards ─────────────────────────────── */
+.top-row{ display:flex; flex-wrap:wrap; gap:14px; justify-content:center; align-items:center; }
+.card{
+  background:var(--glass);
+  backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--glass-border);
+  border-radius:20px; padding:14px 20px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.1);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  min-width:150px; min-height:115px;
+  transition:transform .2s ease, box-shadow .2s ease;
 }
-.loading-overlay span {
-  color: #fff; font-size: 24px; font-weight: 600;
-  background: rgba(0, 0, 0, 0.6); padding: 12px 24px; border-radius: 8px;
+.card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 16px 44px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.15);
+}
+.target-card{ gap:10px; }
+
+/* ── Digit & Lucky Tiles ────────────────── */
+#targetDigits{ display:flex; gap:10px; justify-content:center; }
+.digit{
+  width:60px; height:60px; border-radius:14px;
+  background:linear-gradient(145deg,#0099cc,#005f8a);
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:28px; font-weight:900;
+  box-shadow:0 0 22px rgba(0,212,255,0.45), 0 4px 0 rgba(0,60,100,0.8);
+  text-shadow:0 0 10px rgba(0,212,255,0.5);
+}
+.lucky-token{
+  width:60px; height:60px; border-radius:14px; color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-size:28px; font-weight:900;
+  text-shadow:0 2px 6px rgba(0,0,0,0.4);
+}
+#luckA{ background:linear-gradient(145deg,#00b4d8,#0077a0); box-shadow:0 0 22px rgba(0,180,216,.5),0 4px 0 rgba(0,60,90,.8); }
+#luckB{ background:linear-gradient(145deg,#a855f7,#6d28d9); box-shadow:0 0 22px rgba(168,85,247,.5),0 4px 0 rgba(80,20,140,.8); }
+#luckC{ background:linear-gradient(145deg,#f59e0b,#b45309); box-shadow:0 0 22px rgba(245,158,11,.5),0 4px 0 rgba(120,60,0,.8); }
+
+.lucky-card{ text-align:center; }
+.lucky-title{ font-size:11px; font-weight:700; color:var(--text-dim); margin-bottom:8px; letter-spacing:1.5px; text-transform:uppercase; }
+
+/* ── Formula Area ───────────────────────── */
+.mid{
+  margin:16px auto 10px; width:100%; display:flex; justify-content:center;
+}
+.formula-card{
+  width:100%; max-width:720px;
+  background:var(--glass);
+  backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  border:1px solid var(--glass-border);
+  border-radius:20px; padding:16px;
+  box-shadow:0 8px 32px rgba(0,0,0,0.4);
+  box-sizing:border-box; display:flex; gap:12px; align-items:flex-start;
+}
+.left{ flex:1; }
+.right{ width:90px; flex:0 0 90px; text-align:center; }
+.left h3, .right h3{
+  margin:0 0 8px 0; font-size:11px; font-weight:700;
+  letter-spacing:2px; text-transform:uppercase; color:var(--text-dim);
+}
+.rows{ display:flex; flex-direction:column; gap:5px; }
+.row{
+  display:grid; grid-template-columns:22px 1fr; grid-template-rows:auto auto;
+  align-items:center; gap:2px 6px;
+  padding:6px 10px; border-radius:9px; min-height:32px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.07);
+  transition:background .2s, border-color .2s;
+}
+.row:hover{ background:rgba(255,255,255,0.09); border-color:rgba(0,212,255,0.28); }
+.row .idx{ grid-row:1; font-weight:700; color:var(--cyan); font-size:13px; }
+.row .expr{ grid-row:1; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); font-family:"Courier New",monospace; letter-spacing:.5px; }
+.row .meta{ grid-row:2; grid-column:2; font-size:11px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.right .err-row{
+  height:32px; margin-bottom:5px;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; font-size:14px; font-family:monospace;
+  border-radius:9px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.07);
+  color:var(--purple);
+}
+
+/* ── Buttons ────────────────────────────── */
+.bottom{ display:flex; justify-content:center; gap:14px; margin-top:auto; padding-top:8px; }
+.btn{
+  background:linear-gradient(135deg,#0099ee,#0066cc);
+  color:#fff; border:none; padding:12px 30px;
+  font-size:17px; font-weight:700; letter-spacing:1px;
+  border-radius:14px; cursor:pointer;
+  box-shadow:0 4px 22px rgba(0,150,238,.45), 0 2px 0 rgba(0,0,0,.4);
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.btn:hover{ transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,150,238,.65),0 2px 0 rgba(0,0,0,.4); }
+.btn:active{ transform:translateY(1px); }
+#manualBtn{
+  background:linear-gradient(135deg,#a855f7,#7c3aed);
+  box-shadow:0 4px 22px rgba(168,85,247,.45),0 2px 0 rgba(0,0,0,.4);
+}
+#manualBtn:hover{ box-shadow:0 8px 32px rgba(168,85,247,.65),0 2px 0 rgba(0,0,0,.4); }
+
+/* ── Modal ──────────────────────────────── */
+#manualModal{
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.72);
+  backdrop-filter:blur(6px);
+  display:none; align-items:center; justify-content:center; z-index:500;
+}
+.modal-content{
+  background:rgba(12,8,36,0.96);
+  border:1px solid rgba(168,85,247,0.3);
+  backdrop-filter:blur(24px);
+  padding:26px; border-radius:22px;
+  max-width:320px; width:100%;
+  display:flex; flex-direction:column; gap:12px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.65),0 0 0 1px rgba(168,85,247,0.15);
+}
+.modal-content label{ font-size:12px; font-weight:700; color:var(--text-dim); letter-spacing:.5px; }
+.modal-content input,.modal-content select{
+  padding:9px 12px; font-size:16px; border-radius:10px;
+  border:1px solid rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.08);
+  color:#fff; outline:none;
+  transition:border-color .2s;
+}
+.modal-content input:focus,.modal-content select:focus{ border-color:var(--purple); }
+.modal-content select option{ background:#160d40; }
+.modal-actions{ display:flex; justify-content:flex-end; gap:10px; }
+.modal-actions button{ padding:9px 20px; border:none; border-radius:10px; cursor:pointer; font-size:15px; font-weight:700; transition:transform .1s; }
+.modal-actions .ok{ background:linear-gradient(135deg,#a855f7,#7c3aed); color:#fff; box-shadow:0 4px 16px rgba(168,85,247,.4); }
+.modal-actions .ok:hover{ transform:translateY(-1px); }
+.modal-actions .cancel{ background:rgba(255,255,255,0.12); color:rgba(255,255,255,.7); }
+.modal-actions .cancel:hover{ background:rgba(255,255,255,0.18); }
+
+/* ── Loading ────────────────────────────── */
+.loading-overlay{
+  position:fixed; top:0; left:0; right:0; bottom:0;
+  background:rgba(0,0,0,0.65);
+  backdrop-filter:blur(5px);
+  display:none; align-items:center; justify-content:center; z-index:1000;
+}
+.loading-overlay span{
+  color:#fff; font-size:20px; font-weight:700;
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(0,212,255,0.35);
+  padding:14px 30px; border-radius:14px;
+  animation:glow 1.2s ease-in-out infinite;
+}
+@keyframes glow{
+  0%,100%{ box-shadow:0 0 16px rgba(0,212,255,0.35); }
+  50%{ box-shadow:0 0 36px rgba(0,212,255,0.7); }
+}
+
+/* 觸控裝置停用 hover 位移效果 */
+@media (hover:none){
+  .card:hover{ transform:none; box-shadow:0 8px 32px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.1); }
+  .row:hover{ background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.07); }
+  .btn:hover{ transform:none; }
 }
 
 @media (max-width:980px){
-  .wrap{padding:10px;}
-  .formula-card{flex-direction:column; gap:12px; border-radius:18px;}
-  .right{width:100%;}
+  .wrap{ padding:12px; }
+  .formula-card{ flex-direction:column; gap:10px; }
+  .right{ width:100%; }
 }
-@media (max-width: 600px) {
-  html, body { overflow:auto; }
-  .wrap { height:auto; min-height:100vh; }
-  .top-row { flex-direction: column; align-items: stretch; gap: 12px; }
-  .card { width:100%; min-width:unset; }
-  .button {
-    width: auto;
-    min-width: 100px;
-    padding: 10px 16px;
-    font-size: 16px;
+
+@media (max-width:600px){
+  .wrap{ padding:10px; }
+
+  h1{ font-size:19px; letter-spacing:0; margin:4px 0 10px; }
+
+  /* 上方卡片：目標卡佔滿整行，三個幸運方塊並排在下一行 */
+  .top-row{ gap:8px; }
+  .target-card{
+    flex:0 0 100%;
+    flex-direction:row; justify-content:space-between;
+    min-height:unset; min-width:unset;
+    padding:12px 16px; gap:10px;
   }
-  .formula-card { flex-direction: row; align-items:flex-start; }
-  .left, .right { width:auto; flex:1; }
-  .right { max-width:90px; }
+  .lucky-card{
+    flex:1; min-width:0; min-height:unset;
+    padding:10px 6px;
+  }
+
+  /* 方塊縮小 */
+  .digit{ width:50px; height:50px; font-size:22px; border-radius:10px; }
+  .lucky-token{ width:50px; height:50px; font-size:22px; border-radius:10px; }
+
+  /* 公式卡：覆蓋 980px 的 column，改回左右並排 */
+  .formula-card{
+    flex-direction:row !important;
+    padding:12px; gap:8px;
+  }
+  .left{ flex:1; min-width:0; }
+  .right{ width:54px !important; flex:0 0 54px !important; }
+  .mid{ margin:10px auto 8px; }
+
+  /* 公式列縮小 */
+  .rows{ gap:4px; }
+  .row{ padding:5px 7px; min-height:28px; border-radius:7px; gap:2px 4px; }
+  .row .idx{ font-size:12px; }
+  .row .expr{ font-size:13px; }
+  .row .meta{ font-size:9px; }
+  .right .err-row{ height:36px; font-size:11px; margin-bottom:4px; }
+
+  /* 按鈕各佔一半 */
+  .bottom{ gap:8px; padding-top:10px; padding-bottom:6px; }
+  .btn{ flex:1; padding:13px 8px; font-size:15px; letter-spacing:0; touch-action:manipulation; }
+
+  /* Modal 留邊距不超出螢幕 */
+  .modal-content{ margin:0 12px; padding:20px; max-width:unset; }
+}
+
+@media (max-width:380px){
+  h1{ font-size:16px; }
+  .digit{ width:44px; height:44px; font-size:20px; }
+  .lucky-token{ width:44px; height:44px; font-size:20px; }
+  .lucky-title{ font-size:10px; }
+  .row .expr{ font-size:12px; }
 }
 </style>
 </head>
@@ -156,7 +276,7 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
 <h1>國小高年級 - 步步為營</h1>
 <div class="top-row">
   <div class="card target-card">
-    <div style="text-align:center; font-size:14px; color:#333; margin-right:8px;">目標數字</div>
+    <div style="text-align:center; font-size:12px; font-weight:700; color:rgba(255,255,255,0.5); letter-spacing:1.5px; text-transform:uppercase;">目標數字</div>
     <div id="targetDigits" style="display:flex; gap:12px; align-items:center;">
       <div class="digit" id="d0">-</div>
       <div class="digit" id="d1">-</div>
@@ -175,8 +295,8 @@ h1{ text-align:center; margin:6px 0 14px; font-size:26px; color:#222; }
       <div class="rows" id="formulaRows"></div>
     </div>
     <div class="right">
-      <h3>誤差值</h3>
-      <div style="display:flex;flex-direction:column;gap:8px;" id="errorRows"></div>
+      <h3>得分</h3>
+      <div style="display:flex;flex-direction:column;gap:5px;" id="errorRows"></div>
     </div>
   </div>
 </div>
@@ -239,12 +359,19 @@ const ALL_OPS = ["+","-","*","/"];
 const MUL_DIV = ["*","/"];
 const ADD_SUB = ["+","-"];
 
-// 安全運算（防 /0 與非數）
+// 安全運算（防 /0、防無效運算子開頭/結尾、防非數、結果不可為負數）
 function safeEval(expr){
+  // D：運算子必須是有效的二元符號，不可出現在算式開頭或結尾（如「+12*7」、「÷5+6-」皆無效）
+  if ( /^[+\-*/]/.test(expr) || /[+\-*/]$/.test(expr) ) return NaN;
+  // 防止分母為 0
   if ( /\/\s*0(?![0-9])/g.test(expr) ) return NaN;
   try {
     const v = Function('"use strict";return ('+expr+')')();
-    if (typeof v === "number" && isFinite(v)) return v;
+    if (typeof v === "number" && isFinite(v)){
+      // C：結果可為小數，但不可為負數，負數視為挑戰失敗（不計分）
+      if (v < -1e-9) return NaN;
+      return v < 0 ? 0 : v;
+    }
   } catch(e){}
   return NaN;
 }
@@ -258,6 +385,98 @@ function fmtNum(x){
 const ONE = Array.from({length:10},(_,i)=>String(i));
 const TWO = Array.from({length:90},(_,i)=>String(i+10));
 const NUM_POOL = ONE.concat(TWO);
+
+/* 檢查公式 token 是否含有「除以 0」：依序檢查每個運算子，若為 / 且其右側數字為 0 即不合法 */
+function hasZeroDivision(nums, ops){
+  for (let i=0;i<ops.length;i++){
+    if (ops[i] === '/' && parseInt(nums[i+1],10) === 0) return true;
+  }
+  return false;
+}
+
+/* ---------- 計分（依官方規則）：得分=100-誤差值，方塊數≥8有加分，最多16個方塊+45 ---------- */
+/* 方塊總數：每個數字 token 依位數計（個位數=1個方塊，十位數=2個方塊），加上運算子方塊，
+   若有使用括號方塊（一對「(」「)」）則再加 2 */
+function countBlocks(tokens){
+  let n = 0;
+  for (const num of tokens.numbers) n += String(num).length;
+  n += tokens.ops.length;
+  if (tokens.paren) n += 2;
+  return n;
+}
+function bonusForBlocks(blocks){
+  if (blocks < 8) return 0;
+  return Math.min(45, 5 * (blocks - 7));
+}
+function scoreFor(error, blocks){
+  if (isNaN(error) || error === Infinity) return 0;
+  const base = Math.max(0, 100 - error);
+  if (base <= 0) return 0;
+  return base + bonusForBlocks(blocks);
+}
+
+/* 在 nums/ops 排列中插入一對括號（paren=[startIdx,endIdx]，包住 nums[start..end]） */
+function buildExpr(nums, ops, paren){
+  let expr = "";
+  for (let i=0;i<nums.length;i++){
+    if (paren && i === paren[0]) expr += "(";
+    expr += nums[i];
+    if (paren && i === paren[1]) expr += ")";
+    if (i < ops.length) expr += ops[i];
+  }
+  return expr;
+}
+/* 所有可能的括號包覆範圍（長度≥2，且不包住整個算式，因為那不會改變任何結果） */
+function parenVariants(nums){
+  const variants = [];
+  const n = nums.length;
+  for (let s=0;s<n;s++){
+    for (let e=s+1;e<n;e++){
+      if (s===0 && e===n-1) continue;
+      variants.push([s,e]);
+    }
+  }
+  return variants;
+}
+/* 在不改變數字/運算子排列的前提下，嘗試加入括號方塊以取得更高總分（誤差不變或改變皆可，
+   只要仍是合理可計算的算式，且結果有確實改變才視為有意義的括號用法） */
+function finalizeFormula(formulaObj, target){
+  const nums = formulaObj.tokens.numbers;
+  const ops = formulaObj.tokens.ops;
+  const baseVal = formulaObj.value;
+  const baseErr = Math.abs(baseVal - target);
+  const baseBlocks = countBlocks({ numbers: nums, ops: ops, paren: null });
+  let best = {
+    exprJS: formulaObj.exprJS,
+    exprShow: formulaObj.exprShow,
+    value: baseVal,
+    error: baseErr,
+    tokens: { numbers: nums.slice(), ops: ops.slice(), paren: null },
+    blocks: baseBlocks,
+    score: scoreFor(baseErr, baseBlocks)
+  };
+  for (const pr of parenVariants(nums)){
+    const expr = buildExpr(nums, ops, pr);
+    const val = safeEval(expr);
+    if (isNaN(val)) continue;
+    if (Math.abs(val - baseVal) < EPS) continue; // 括號未改變結果，無意義
+    const err = Math.abs(val - target);
+    const blocks = countBlocks({ numbers: nums, ops: ops, paren: pr });
+    const score = scoreFor(err, blocks);
+    if (score > best.score){
+      best = {
+        exprJS: expr,
+        exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'),
+        value: val,
+        error: err,
+        tokens: { numbers: nums.slice(), ops: ops.slice(), paren: pr },
+        blocks, score
+      };
+    }
+  }
+  best.bonus = bonusForBlocks(best.blocks);
+  return best;
+}
 
 /* 檢查：一個公式內的數字 token 不可重複（token 層），且數字位元（每個字元）也不可重複（位元層）
    根據你的要求同時檢查兩者 */
@@ -309,6 +528,7 @@ function findExactN3(target, luckA, luckB, luckC){
       for (const p of perms){
         for (const ops of opsOrders){
           if (new Set(ops).size !== ops.length) continue;
+          if (hasZeroDivision(p, ops)) continue;
           const expr = `${p[0]}${ops[0]}${p[1]}${ops[1]}${p[2]}`;
           const val = safeEval(expr);
           if (isNaN(val)) continue;
@@ -370,6 +590,7 @@ function findExactN4(target, luckA, luckB, luckC, maxChecks = 100000){
         const opsPerms = permutations(opsSet);
         for (const ops of opsPerms){
           if (!tokensUnique(p, ops)) continue;
+          if (hasZeroDivision(p, ops)) continue;
           let expr = "";
           for (let idx=0; idx<p.length; idx++){
             expr += p[idx];
@@ -407,11 +628,14 @@ function findExactFormula(target, luckA, luckB, luckC){
 
 /* ---------- 回退：若找不到精確解，使用近似 / 局部精修（優化搜索效率） ---------- */
 function refineFormula(formulaObj, target, luckA, luckB, luckC){
+  const baseErr = Math.abs(formulaObj.value - target);
+  const baseBlocks = countBlocks({ numbers: formulaObj.tokens.numbers, ops: formulaObj.tokens.ops, paren: null });
   let best = {
     exprJS: formulaObj.exprJS,
     exprShow: formulaObj.exprShow,
     value: formulaObj.value,
-    error: Math.abs(formulaObj.value - target),
+    error: baseErr,
+    score: scoreFor(baseErr, baseBlocks),
     tokens: {
       numbers: formulaObj.tokens.numbers.slice(),
       ops: formulaObj.tokens.ops.slice()
@@ -436,16 +660,20 @@ function refineFormula(formulaObj, target, luckA, luckB, luckC){
         if (!NUM_POOL.includes(sV) || nums.includes(sV)) continue;
         const tempNums = nums.slice(); tempNums[i]=sV;
         if (!tokensUnique(tempNums, ops)) continue;
+        if (hasZeroDivision(tempNums, ops)) continue;
         const expr = tempNums.map((n,j)=> n + (j<ops.length?ops[j]:"")).join("");
         const val = safeEval(expr);
         if (isNaN(val)) continue;
         const err = Math.abs(val - target);
-        if (err < best.error && (!candidateBest || err < candidateBest.error)){
+        const blocks = countBlocks({ numbers: tempNums, ops: ops, paren: null });
+        const score = scoreFor(err, blocks);
+        if (score > best.score && (!candidateBest || score > candidateBest.score)){
           candidateBest = {
             exprJS: expr,
             exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'),
             value: val,
             error: err,
+            score: score,
             tokens: { numbers: tempNums.slice(), ops: ops.slice() }
           };
         }
@@ -459,17 +687,20 @@ function refineFormula(formulaObj, target, luckA, luckB, luckC){
         const newOps = ops.slice(); newOps[j] = candidateOp;
         if (new Set(newOps).size !== newOps.length) continue;
         if (!newOps.includes(luckB) || !newOps.includes(luckC)) continue;
+        if (hasZeroDivision(best.tokens.numbers, newOps)) continue;
         const expr = best.tokens.numbers.map((n,k)=> n + (k<newOps.length?newOps[k]:"")).join("");
         const val = safeEval(expr);
         if (isNaN(val)) continue;
         const err = Math.abs(val - target);
-        if (err < best.error && (!candidateBest || err < candidateBest.error)){
-          candidateBest = { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: err, tokens: { numbers: best.tokens.numbers.slice(), ops: newOps.slice() } };
+        const blocks = countBlocks({ numbers: best.tokens.numbers, ops: newOps, paren: null });
+        const score = scoreFor(err, blocks);
+        if (score > best.score && (!candidateBest || score > candidateBest.score)){
+          candidateBest = { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: err, score: score, tokens: { numbers: best.tokens.numbers.slice(), ops: newOps.slice() } };
         }
       }
     }
 
-    if (candidateBest && candidateBest.error < best.error){ best = candidateBest; improved = true; }
+    if (candidateBest && candidateBest.score > best.score){ best = candidateBest; improved = true; }
     if (!improved) break;
   }
   return best;
@@ -500,26 +731,25 @@ function findBestApproxBase(target, luckA, luckB, luckC, trials=2000){
     const numsShuffled = shuffle(chosen);
     const opsShuffled = shuffle(ops);
     if (!tokensUnique(numsShuffled, opsShuffled)) continue;
+    if (hasZeroDivision(numsShuffled, opsShuffled)) continue;
     const expr = numsShuffled.map((n,i)=> n + (i < opsShuffled.length ? opsShuffled[i] : "")).join("");
     if (seen.has(expr)) continue;
     seen.add(expr);
     const val = safeEval(expr);
     if (isNaN(val)) continue;
     const err = Math.abs(val - target);
-    if (err <= 10) {
-      const ev = { exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: err, tokens: { numbers: numsShuffled.slice(), ops: opsShuffled.slice() } };
-      candidates.push(ev);
-    }
+    const blocks = countBlocks({ numbers: numsShuffled, ops: opsShuffled, paren: null });
+    candidates.push({ exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: err, score: scoreFor(err, blocks), tokens: { numbers: numsShuffled.slice(), ops: opsShuffled.slice() } });
   }
 
   if (candidates.length === 0) return null;
-  candidates.sort((a,b)=> a.error - b.error);
+  candidates.sort((a,b)=> b.score - a.score);
   const topK = Math.min(50, candidates.length);
   const refined = [];
   for (let i=0;i<topK;i++){
     refined.push(refineFormula(candidates[i], target, luckA, luckB, luckC));
   }
-  refined.sort((a,b)=> a.error - b.error);
+  refined.sort((a,b)=> b.score - a.score);
   return refined[0];
 }
 
@@ -560,13 +790,14 @@ function produceFiveFromBase(baseObj, target, luckA, luckB, luckC){
         if (nums.includes(cand)) continue;
         const tmpNums = nums.slice(); tmpNums[idx] = cand;
         if (!tokensUnique(tmpNums, ops)) continue;
+        if (hasZeroDivision(tmpNums, ops)) continue;
         const expr = tmpNums.map((n,i)=> n + (i<ops.length?ops[i]:"")).join("");
         if (existing.has(expr)) continue;
         const val = safeEval(expr);
         if (isNaN(val)) continue;
         const candidate = refineFormula({ exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: Math.abs(val-target), tokens: { numbers: tmpNums.slice(), ops: ops.slice() } }, target, luckA, luckB, luckC);
         if (existing.has(candidate.exprJS)) continue;
-        if (candidate.error <= 10) {
+        if (candidate.error <= 30) {
           produced.push(candidate);
           existing.add(candidate.exprJS);
           made = true;
@@ -584,13 +815,14 @@ function produceFiveFromBase(baseObj, target, luckA, luckB, luckC){
         const newOps = ops.slice(); newOps[j] = candidateOp;
         if (new Set(newOps).size !== newOps.length) continue;
         if (!newOps.includes(luckB) || !newOps.includes(luckC)) continue;
+        if (hasZeroDivision(nums, newOps)) continue;
         const expr = nums.map((n,i)=> n + (i<newOps.length?newOps[i]:"")).join("");
         if (existing.has(expr)) continue;
         const val = safeEval(expr);
         if (isNaN(val)) continue;
         const candidate = refineFormula({ exprJS: expr, exprShow: expr.replace(/\*/g,'×').replace(/\//g,'÷'), value: val, error: Math.abs(val-target), tokens: { numbers: nums.slice(), ops: newOps.slice() } }, target, luckA, luckB, luckC);
         if (existing.has(candidate.exprJS)) continue;
-        if (candidate.error <= 10) {
+        if (candidate.error <= 30) {
           produced.push(candidate);
           existing.add(candidate.exprJS);
           break;
@@ -605,13 +837,14 @@ function produceFiveFromBase(baseObj, target, luckA, luckB, luckC){
     const newBase = findBestApproxBase(target, luckA, luckB, luckC, 1000);
     if (!newBase) continue;
     if (existing.has(newBase.exprJS)) continue;
-    if (newBase.error <= 10) {
+    if (newBase.error <= 30) {
       produced.push(newBase);
       existing.add(newBase.exprJS);
     }
   }
-  produced.sort((a,b)=> a.error - b.error);
-  return produced.slice(0,5);
+  const finalized = produced.map(f => finalizeFormula(f, target));
+  finalized.sort((a,b)=> b.score - a.score);
+  return finalized.slice(0,5);
 }
 
 /* ---------- UI 與主流程（保持你原本的 DOM ID 與使用者互動不變） ---------- */
@@ -640,7 +873,7 @@ function initFiveRows(){
   for (let i=0;i<5;i++){
     const row = document.createElement("div");
     row.className="row";
-    row.innerHTML = `<div class="idx">${i+1}.</div><div class="expr" id="expr${i}">-</div>`;
+    row.innerHTML = `<div class="idx">${i+1}.</div><div class="expr" id="expr${i}">-</div><div class="meta" id="meta${i}"></div>`;
     formulaRows.appendChild(row);
     const er = document.createElement("div"); er.className="err-row"; er.id = "err"+i; er.textContent="-";
     errorRows.appendChild(er);
@@ -649,13 +882,17 @@ function initFiveRows(){
 function fillRows(arr){
   for (let i=0;i<5;i++){
     const exprDiv = document.getElementById("expr"+i);
+    const metaDiv = document.getElementById("meta"+i);
     const errDiv = document.getElementById("err"+i);
-    if (!arr[i] || arr[i].exprShow === "-"){
+    const f = arr[i];
+    if (!f || f.exprShow === "-"){
       exprDiv.textContent = "-";
+      metaDiv.textContent = "";
       errDiv.textContent = "-";
     } else {
-      exprDiv.textContent = `${arr[i].exprShow} = ${fmtNum(arr[i].value)}`;
-      errDiv.textContent = (arr[i].error === Infinity) ? "-" : fmtNum(arr[i].error);
+      exprDiv.textContent = `${f.exprShow} = ${fmtNum(f.value)}`;
+      metaDiv.textContent = `誤差 ${fmtNum(f.error)}｜方塊 ${f.blocks}｜加分 +${f.bonus}`;
+      errDiv.textContent = `${fmtNum(f.score)} 分`;
     }
   }
 }

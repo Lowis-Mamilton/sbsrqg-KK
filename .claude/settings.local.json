@@ -1,7 +1,28 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -m http.server 8080)"
+      "Bash(python -m http.server 8080)",
+      "Bash(cd /tmp)",
+      "Bash(node -e ' *)",
+      "Bash(node *)",
+      "Skill(run)",
+      "Bash(npm ls *)",
+      "Bash(npx --yes playwright --version)",
+      "Bash(npx --yes playwright screenshot --help)",
+      "Bash(mkdir -p /tmp/shots)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"1280,900\" --block-service-workers http://localhost:8080 /tmp/shots/desktop.png)",
+      "Bash(npx --yes playwright install chromium)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"375,667\" --block-service-workers http://localhost:8080 /tmp/shots/mobile_375.png)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"320,568\" --block-service-workers http://localhost:8080 /tmp/shots/mobile_320.png)",
+      "Read(//tmp/**)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"1280,900\" --wait-for-timeout=1500 --block-service-workers http://localhost:8080 /tmp/shots/desktop.png)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"375,667\" --wait-for-timeout=1500 --block-service-workers http://localhost:8080 /tmp/shots/mobile_375.png)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"320,568\" --wait-for-timeout=1500 --block-service-workers http://localhost:8080 /tmp/shots/mobile_320.png)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"414,896\" --wait-for-timeout=1500 --block-service-workers http://localhost:8080 /tmp/shots/mobile_414.png)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"1280,900\" --wait-for-timeout=1500 --block-service-workers http://localhost:8080 /tmp/shots/desktop2.png)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"375,667\" --wait-for-timeout=1500 --block-service-workers http://localhost:8080 /tmp/shots/mobile_375_2.png)",
+      "Bash(npx --yes playwright screenshot --viewport-size=\"320,568\" --wait-for-timeout=1500 --block-service-workers http://localhost:8080 /tmp/shots/mobile_320_2.png)",
+      "Bash(pkill -f \"http.server 8080\")"
     ]
   }
 }

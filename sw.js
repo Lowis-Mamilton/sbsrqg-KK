@@ -1,5 +1,5 @@
 // 定義快取名稱和要快取的檔案清單
-const CACHE_NAME = 'lucky-formula-generator-v1';
+const CACHE_NAME = 'lucky-formula-generator-v2';
 const urlsToCache = [
   './',
   './index.html',
