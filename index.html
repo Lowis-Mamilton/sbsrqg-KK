@@ -150,6 +150,12 @@ h1{
 .row .idx{ grid-row:1; font-weight:700; color:var(--cyan); font-size:13px; }
 .row .expr{ grid-row:1; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); font-family:"Courier New",monospace; letter-spacing:.5px; }
 .row .meta{ grid-row:2; grid-column:2; font-size:11px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.exact-warning{
+  width:100%; max-width:720px; box-sizing:border-box;
+  margin:0 0 10px; padding:8px 14px; border-radius:12px;
+  background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.4);
+  color:var(--gold); font-size:12px; font-weight:700; text-align:center;
+}
 .right .err-row{
   height:32px; margin-bottom:5px;
   display:flex; align-items:center; justify-content:center;
@@ -317,6 +323,7 @@ h1{
 </div>
 
 <div class="mid">
+  <div class="exact-warning" id="exactWarning" style="display:none;">⚠ 找不到完全符合規則（0~9 各用一次、四種運算子各用一次、一對有意義括號、完全等於目標）的公式，以下為退回後最接近的公式</div>
   <div class="formula-card" id="formulaCard">
     <div class="left">
       <h3>最佳公式</h3>
@@ -383,12 +390,22 @@ if ('serviceWorker' in navigator) {
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function shuffle(arr){ const a=arr.slice(); for (let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function permutations(arr){
+  if (arr.length<=1) return [arr.slice()];
+  const result=[];
+  for (let i=0;i<arr.length;i++){
+    const rest=arr.slice(0,i).concat(arr.slice(i+1));
+    for (const p of permutations(rest)) result.push([arr[i]].concat(p));
+  }
+  return result;
+}
 
 const OPS_SHOW = {"*":"×","/":"÷","+":"＋","-":"－"};
 const ALL_OPS = ["+","-","*","/"];
 const MUL_DIV = ["*","/"];
 const ADD_SUB = ["+","-"];
 const EPS = 1e-9;
+const OP_PERMS = permutations(ALL_OPS); // 4 種運算子的全部 24 種排列，供「每種都用一次」模式使用
 
 /* 數字候選池 (0-9, 10-99)：只允許一位與二位數字 */
 const ONE = Array.from({length:10},(_,i)=>String(i));
@@ -440,6 +457,10 @@ function scoreFor(error, blocks){
   if (base<=0) return 0;
   return base + bonusForBlocks(blocks);
 }
+/* 排名準則：完全命中(誤差=0)一律優先於任何近似解；命中時方塊數越多越好；
+   都沒命中時才退回用分數比較（近似解的備案排序） */
+function rankOf(f){ return f.error < EPS ? 100000 + f.blocks : f.score; }
+function isExact(f){ return f.error < EPS; }
 
 /* 公式合法性：數字 token 不重複、位元(每個數字字元)不重複、運算子不重複 */
 function tokensUnique(nums, ops){
@@ -534,13 +555,13 @@ function hillClimb(f, target, luckA, luckB, luckC){
         if (cand===nums[i] || nums.includes(cand)) continue;
         const tn=nums.slice(); tn[i]=cand;
         const f2=makeFormula(tn,ops,target);
-        if (f2 && f2.score>lb.score) lb=f2;
+        if (f2 && rankOf(f2)>rankOf(lb)) lb=f2;
       }
     }
     for (let i=0;i<nums.length;i++) for (let j=i+1;j<nums.length;j++){
       const tn=nums.slice(); [tn[i],tn[j]]=[tn[j],tn[i]];
       const f2=makeFormula(tn,ops,target);
-      if (f2 && f2.score>lb.score) lb=f2;
+      if (f2 && rankOf(f2)>rankOf(lb)) lb=f2;
     }
     for (let k=0;k<ops.length;k++){
       if (ops[k]===luckB || ops[k]===luckC) continue;
@@ -550,15 +571,15 @@ function hillClimb(f, target, luckA, luckB, luckC){
         if (new Set(to).size!==to.length) continue;
         if (!to.includes(luckB)||!to.includes(luckC)) continue;
         const f2=makeFormula(nums,to,target);
-        if (f2 && f2.score>lb.score) lb=f2;
+        if (f2 && rankOf(f2)>rankOf(lb)) lb=f2;
       }
     }
     for (let i=0;i<ops.length;i++) for (let j=i+1;j<ops.length;j++){
       const to=ops.slice(); [to[i],to[j]]=[to[j],to[i]];
       const f2=makeFormula(nums,to,target);
-      if (f2 && f2.score>lb.score) lb=f2;
+      if (f2 && rankOf(f2)>rankOf(lb)) lb=f2;
     }
-    if (lb.score>best.score){ best=lb; improved=true; }
+    if (rankOf(lb)>rankOf(best)){ best=lb; improved=true; }
   }
   return best;
 }
@@ -578,45 +599,143 @@ function finalizeFormula(f, target){
     const err=Math.abs(val-target);
     const blocks=countBlocks({numbers:nums,ops:ops,paren:pr});
     const score=scoreFor(err,blocks);
-    if (score>best.score){
-      best={ exprJS:expr, exprShow:expr.replace(/\*/g,'×').replace(/\//g,'÷'), value:val, error:err,
-        tokens:{numbers:nums.slice(),ops:ops.slice(),paren:pr}, blocks, score };
-    }
+    const cand={ exprJS:expr, exprShow:expr.replace(/\*/g,'×').replace(/\//g,'÷'), value:val, error:err,
+      tokens:{numbers:nums.slice(),ops:ops.slice(),paren:pr}, blocks, score };
+    if (rankOf(cand)>rankOf(best)) best=cand;
   }
   best.bonus=bonusForBlocks(best.blocks);
   return best;
 }
 
-/* 主搜尋：回傳分數最高的前 5 條（已加括號最佳化、去重、由高到低排序） */
+/* ===== 新規則模式（Tier 0，最優先）：
+   0~9 每個數字恰用一次 → 必為 5 個兩位數；四種運算子（+ - × ÷）各恰用一次；
+   恰一對「有意義」括號（括號內若拿掉會改變計算結果）；計算結果完全等於目標數字。
+   幸運方塊 A/B/C 在此模式下必然滿足（A 是 0~9 之一、B/C 是四運算子之一）。 ===== */
+const PAREN_SHAPES_5 = parenVariants([0,1,2,3,4]);     // 9 種括號範圍（不含整式）
+const ALL_STRUCTURES = [];                              // 216 種「運算子排列 × 括號位置」結構
+for (const ops of OP_PERMS) for (const pr of PAREN_SHAPES_5) ALL_STRUCTURES.push({ops, pr});
+
+function digitsToNums(digits){
+  const nums=[];
+  for (let i=0;i<10;i+=2){
+    if (digits[i]==='0') return null;   // 兩位數不可有前導 0
+    nums.push(digits[i]+digits[i+1]);
+  }
+  return nums;
+}
+/* 在固定的「運算子排列＋括號位置」結構下，計算某個 0~9 排列對應的公式值（括號須有意義） */
+function evalStructure(nums, ops, pr){
+  const baseVal=safeEval(exprFromTokens(nums, ops));
+  if (isNaN(baseVal)) return null;
+  const val=safeEval(buildExpr(nums, ops, pr));
+  if (isNaN(val)) return null;
+  if (Math.abs(val-baseVal)<EPS) return null;   // 括號未改變結果則無意義
+  return val;
+}
+/* 固定結構，對 0~9 的排列做爬山（交換任意兩個數字位元），尋找誤差=0 的指派 */
+function hillClimbDigits(initDigits, ops, pr, target){
+  let best=initDigits.slice();
+  let bestVal=null, bestNums=digitsToNums(best);
+  if (bestNums) bestVal=evalStructure(bestNums, ops, pr);
+  let bestErr = bestVal===null ? Infinity : Math.abs(bestVal-target);
+  let improved=true, iters=0;
+  while (improved && iters<60 && bestErr>=EPS){
+    improved=false; iters++;
+    for (let i=0;i<10;i++){
+      for (let j=i+1;j<10;j++){
+        const cand=best.slice(); [cand[i],cand[j]]=[cand[j],cand[i]];
+        const nums=digitsToNums(cand);
+        if (!nums) continue;
+        const val=evalStructure(nums, ops, pr);
+        if (val===null) continue;
+        const err=Math.abs(val-target);
+        if (err<bestErr-EPS){ bestErr=err; best=cand; bestVal=val; improved=true; }
+      }
+    }
+  }
+  return { digits:best, value:bestVal, error:bestErr };
+}
+function searchFullConstraintFormulas(target, opts){
+  opts=opts||{};
+  const maxBudget=opts.maxBudget||500;
+  const t0=Date.now();
+  const found=new Map();
+  const structures=shuffle(ALL_STRUCTURES);
+  let si=0;
+  while (Date.now()-t0<maxBudget && found.size<5){
+    const struct=structures[si % structures.length]; si++;
+    const initDigits=shuffle(['0','1','2','3','4','5','6','7','8','9']);
+    const climbed=hillClimbDigits(initDigits, struct.ops, struct.pr, target);
+    if (climbed.error<EPS){
+      const nums=digitsToNums(climbed.digits);
+      if (!nums || hasZeroDivision(nums, struct.ops)) continue;
+      const expr=buildExpr(nums, struct.ops, struct.pr);
+      const exprShow=expr.replace(/\*/g,'×').replace(/\//g,'÷');
+      if (found.has(exprShow)) continue;
+      found.set(exprShow, {
+        exprJS:expr, exprShow, value:target, error:0,
+        tokens:{numbers:nums.slice(), ops:struct.ops.slice(), paren:struct.pr},
+        blocks:16, bonus:45, score:145, fullyCompliant:true
+      });
+    }
+    if (si>20000) break;
+  }
+  return { list:Array.from(found.values()), groupings:si };
+}
+
+/* 主搜尋（總入口，三層優先序退回）：
+   Tier0：完全符合新規則（0~9 分配、四運算子全用、一對有意義括號、完全等於目標）
+   Tier1：放寬數字分配/括號規則，但仍要求完全等於目標（searchApproxFormulas 內建命中優先邏輯）
+   Tier2：兩者都找不到時，由 searchApproxFormulas 退回最接近目標的近似公式 */
 function searchFormulas(target, luckA, luckB, luckC, opts){
   opts=opts||{};
-  const minBudget=opts.minBudget||160;    // 至少搜尋這麼久(ms)
-  const maxBudget=opts.maxBudget||350;    // 難題最多搜尋這麼久(ms)，避免卡頓
-  const goodEnough=opts.goodEnough||138;  // 分數已夠高就提早收手
+  const full = searchFullConstraintFormulas(target, opts.fullOpts);
+  const list = full.list.slice(0,5);
+  if (list.length<5){
+    const approx = searchApproxFormulas(target, luckA, luckB, luckC, opts.approxOpts);
+    for (const f of approx.list){
+      if (list.length>=5) break;
+      if (list.some(x=>x.exprShow===f.exprShow)) continue;
+      list.push(Object.assign({fullyCompliant:false}, f));
+    }
+  }
+  const fullyCompliant = list.length>0 && list.every(f=>f.fullyCompliant);
+  const hasExact = list.length>0 && list.every(f=>f.error<EPS);
+  return { list, fullyCompliant, hasExact };
+}
+
+/* 近似/退回搜尋：回傳分數最高的前 5 條（已加括號最佳化、去重、由高到低排序） */
+function searchApproxFormulas(target, luckA, luckB, luckC, opts){
+  opts=opts||{};
+  const minBudget=opts.minBudget||220;    // 至少搜尋這麼久(ms)
+  const maxBudget=opts.maxBudget||600;    // 難題最多搜尋這麼久(ms)，避免卡頓
   const t0=Date.now();
   const pool=new Map();                    // exprJS -> 爬山後公式
   const shapes=[5,5,5,5,4,4,4,3];          // 權重偏向 5 數字(方塊最多)
-  let restarts=0, bestScore=-1;
+  let restarts=0, bestRank=-1;
   while (true){
     const elapsed=Date.now()-t0;
     if (elapsed>=maxBudget) break;
-    if (elapsed>=minBudget && bestScore>=goodEnough) break;
+    if (elapsed>=minBudget && bestRank>=100000+15) break;  // 已找到命中且方塊接近封頂
     restarts++;
     const n=pick(shapes);
     const init=randomInit(n, target, luckA, luckB, luckC);
     if (!init){ if(restarts>4000) break; continue; }
     const climbed=hillClimb(init, target, luckA, luckB, luckC);
-    if (!pool.has(climbed.exprJS) || pool.get(climbed.exprJS).score<climbed.score) pool.set(climbed.exprJS, climbed);
-    if (climbed.score>bestScore) bestScore=climbed.score;
-    if (climbed.error<EPS && climbed.blocks>=15) break;  // 命中且方塊封頂
-    if (bestScore>=139.5) break;
+    if (!pool.has(climbed.exprJS) || rankOf(pool.get(climbed.exprJS))<rankOf(climbed)) pool.set(climbed.exprJS, climbed);
+    const r=rankOf(climbed);
+    if (r>bestRank) bestRank=r;
+    if (climbed.error<EPS && climbed.blocks>=16) break;  // 命中且方塊封頂
     if (restarts>30000) break;
   }
   let arr=Array.from(pool.values()).map(f=>finalizeFormula(f,target));
-  arr.sort((a,b)=>b.score-a.score);
+  arr.sort((a,b)=>rankOf(b)-rankOf(a));
   const seen=new Set(); const uniq=[];
   for (const f of arr){ if(seen.has(f.exprShow))continue; seen.add(f.exprShow); uniq.push(f); if(uniq.length>=5)break; }
-  return { list:uniq, restarts, bestScore };
+  const exactOnly=uniq.filter(isExact);
+  const list = exactOnly.length>0 ? exactOnly : uniq;
+  const hasExact = exactOnly.length>0;
+  return { list, restarts, bestRank, hasExact };
 }
 
 /* ===== UI 與主流程（DOM ID 與互動行為與原本相同） ===== */
@@ -638,6 +757,7 @@ const manualC = document.getElementById("manualC");
 const manualOk = document.getElementById("manualOk");
 const manualCancel = document.getElementById("manualCancel");
 const loadingOverlay = document.getElementById("loadingOverlay");
+const exactWarning = document.getElementById("exactWarning");
 const formulaCard = document.getElementById("formulaCard");
 const toggleBtn = document.getElementById("toggleBtn");
 const toggleLabel = document.getElementById("toggleLabel");
@@ -700,7 +820,8 @@ function regenerate(){
   const s = String(target).padStart(3,"0");
   d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
   luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
-  const { list } = searchFormulas(target, luckA, luckB, luckC);
+  const { list, fullyCompliant } = searchFormulas(target, luckA, luckB, luckC);
+  exactWarning.style.display = fullyCompliant ? "none" : "block";
   fillRows(list);
   loadingOverlay.style.display = "none";
 }
@@ -712,7 +833,8 @@ function regenerateCustom(target, luckA, luckB, luckC){
   const s = String(target).padStart(3,"0");
   d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
   luckAEl.textContent = String(luckA); luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
-  const { list } = searchFormulas(target, String(luckA), luckB, luckC);
+  const { list, fullyCompliant } = searchFormulas(target, String(luckA), luckB, luckC);
+  exactWarning.style.display = fullyCompliant ? "none" : "block";
   fillRows(list);
   loadingOverlay.style.display = "none";
 }
