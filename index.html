@@ -48,8 +48,6 @@ h1{
   background-clip:text;
   filter:drop-shadow(0 0 18px rgba(0,212,255,0.35));
 }
-
-/* ── Cards ─────────────────────────────── */
 .top-row{ display:flex; flex-wrap:wrap; gap:14px; justify-content:center; align-items:center; }
 .card{
   background:var(--glass);
@@ -66,8 +64,6 @@ h1{
   box-shadow:0 16px 44px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.15);
 }
 .target-card{ gap:10px; }
-
-/* ── Digit & Lucky Tiles ────────────────── */
 #targetDigits{ display:flex; gap:10px; justify-content:center; }
 .digit{
   width:60px; height:60px; border-radius:14px;
@@ -86,25 +82,16 @@ h1{
 #luckA{ background:linear-gradient(145deg,#00b4d8,#0077a0); box-shadow:0 0 22px rgba(0,180,216,.5),0 4px 0 rgba(0,60,90,.8); }
 #luckB{ background:linear-gradient(145deg,#a855f7,#6d28d9); box-shadow:0 0 22px rgba(168,85,247,.5),0 4px 0 rgba(80,20,140,.8); }
 #luckC{ background:linear-gradient(145deg,#f59e0b,#b45309); box-shadow:0 0 22px rgba(245,158,11,.5),0 4px 0 rgba(120,60,0,.8); }
-
 .lucky-card{ text-align:center; }
 .lucky-title{ font-size:11px; font-weight:700; color:var(--text-dim); margin-bottom:8px; letter-spacing:1.5px; text-transform:uppercase; }
-
-/* ── Formula Area ───────────────────────── */
 .mid{
   margin:16px auto 10px; width:100%;
   display:flex; flex-direction:column; align-items:center;
 }
-
-/* 預設只顯示最佳解（第一列）；展開後顯示全部 */
 #formulaCard:not(.expanded) #formulaRows .row:not(:first-child),
 #formulaCard:not(.expanded) #errorRows .err-row:not(:first-child){ display:none; }
-
-/* 最佳解列：金色強調 */
 #formulaRows .row.best{ border-color:rgba(251,191,36,0.45); background:rgba(251,191,36,0.08); }
 #errorRows .err-row.best{ border-color:rgba(251,191,36,0.45); background:rgba(251,191,36,0.10); color:var(--gold); }
-
-/* 展開／收合切換鈕 */
 .toggle-btn{
   margin-top:12px;
   display:inline-flex; align-items:center; gap:8px;
@@ -150,12 +137,7 @@ h1{
 .row .idx{ grid-row:1; font-weight:700; color:var(--cyan); font-size:13px; }
 .row .expr{ grid-row:1; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:var(--text); font-family:"Courier New",monospace; letter-spacing:.5px; }
 .row .meta{ grid-row:2; grid-column:2; font-size:11px; color:var(--text-dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.exact-warning{
-  width:100%; max-width:720px; box-sizing:border-box;
-  margin:0 0 10px; padding:8px 14px; border-radius:12px;
-  background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.4);
-  color:var(--gold); font-size:12px; font-weight:700; text-align:center;
-}
+
 .right .err-row{
   height:32px; margin-bottom:5px;
   display:flex; align-items:center; justify-content:center;
@@ -165,8 +147,6 @@ h1{
   border:1px solid rgba(255,255,255,0.07);
   color:var(--purple);
 }
-
-/* ── Buttons ────────────────────────────── */
 .bottom{ display:flex; justify-content:center; gap:14px; margin-top:auto; padding-top:8px; }
 .btn{
   background:linear-gradient(135deg,#0099ee,#0066cc);
@@ -183,8 +163,6 @@ h1{
   box-shadow:0 4px 22px rgba(168,85,247,.45),0 2px 0 rgba(0,0,0,.4);
 }
 #manualBtn:hover{ box-shadow:0 8px 32px rgba(168,85,247,.65),0 2px 0 rgba(0,0,0,.4); }
-
-/* ── Modal ──────────────────────────────── */
 #manualModal{
   position:fixed; top:0; left:0; right:0; bottom:0;
   background:rgba(0,0,0,0.72);
@@ -216,8 +194,6 @@ h1{
 .modal-actions .ok:hover{ transform:translateY(-1px); }
 .modal-actions .cancel{ background:rgba(255,255,255,0.12); color:rgba(255,255,255,.7); }
 .modal-actions .cancel:hover{ background:rgba(255,255,255,0.18); }
-
-/* ── Loading ────────────────────────────── */
 .loading-overlay{
   position:fixed; top:0; left:0; right:0; bottom:0;
   background:rgba(0,0,0,0.65);
@@ -235,26 +211,19 @@ h1{
   0%,100%{ box-shadow:0 0 16px rgba(0,212,255,0.35); }
   50%{ box-shadow:0 0 36px rgba(0,212,255,0.7); }
 }
-
-/* 觸控裝置停用 hover 位移效果 */
 @media (hover:none){
   .card:hover{ transform:none; box-shadow:0 8px 32px rgba(0,0,0,0.45),inset 0 1px 0 rgba(255,255,255,0.1); }
   .row:hover{ background:rgba(255,255,255,0.04); border-color:rgba(255,255,255,0.07); }
   .btn:hover{ transform:none; }
 }
-
 @media (max-width:980px){
   .wrap{ padding:12px; }
   .formula-card{ flex-direction:column; gap:10px; }
   .right{ width:100%; }
 }
-
 @media (max-width:600px){
   .wrap{ padding:10px; }
-
   h1{ font-size:19px; letter-spacing:0; margin:4px 0 10px; }
-
-  /* 上方卡片：目標卡佔滿整行，三個幸運方塊並排在下一行 */
   .top-row{ gap:8px; }
   .target-card{
     flex:0 0 100%;
@@ -262,40 +231,23 @@ h1{
     min-height:unset; min-width:unset;
     padding:12px 16px; gap:10px;
   }
-  .lucky-card{
-    flex:1; min-width:0; min-height:unset;
-    padding:10px 6px;
-  }
-
-  /* 方塊縮小 */
+  .lucky-card{ flex:1; min-width:0; min-height:unset; padding:10px 6px; }
   .digit{ width:50px; height:50px; font-size:22px; border-radius:10px; }
   .lucky-token{ width:50px; height:50px; font-size:22px; border-radius:10px; }
-
-  /* 公式卡：覆蓋 980px 的 column，改回左右並排 */
-  .formula-card{
-    flex-direction:row !important;
-    padding:12px; gap:8px;
-  }
+  .formula-card{ flex-direction:row !important; padding:12px; gap:8px; }
   .left{ flex:1; min-width:0; }
   .right{ width:54px !important; flex:0 0 54px !important; }
   .mid{ margin:10px auto 8px; }
-
-  /* 公式列縮小 */
   .rows{ gap:4px; }
   .row{ padding:5px 7px; min-height:28px; border-radius:7px; gap:2px 4px; }
   .row .idx{ font-size:12px; }
   .row .expr{ font-size:13px; }
   .row .meta{ font-size:9px; }
   .right .err-row{ height:36px; font-size:11px; margin-bottom:4px; }
-
-  /* 按鈕各佔一半 */
   .bottom{ gap:8px; padding-top:10px; padding-bottom:6px; }
   .btn{ flex:1; padding:13px 8px; font-size:15px; letter-spacing:0; touch-action:manipulation; }
-
-  /* Modal 留邊距不超出螢幕 */
   .modal-content{ margin:0 12px; padding:20px; max-width:unset; }
 }
-
 @media (max-width:380px){
   h1{ font-size:16px; }
   .digit{ width:44px; height:44px; font-size:20px; }
@@ -323,7 +275,6 @@ h1{
 </div>
 
 <div class="mid">
-  <div class="exact-warning" id="exactWarning" style="display:none;">⚠ 找不到完全符合規則（0~9 各用一次、四種運算子各用一次、一對有意義括號、完全等於目標）的公式，以下為退回後最接近的公式</div>
   <div class="formula-card" id="formulaCard">
     <div class="left">
       <h3>最佳公式</h3>
@@ -346,7 +297,6 @@ h1{
 </div>
 </div>
 
-<!-- 手動輸入的彈窗 -->
 <div id="manualModal">
   <div class="modal-content">
     <label>目標數字 (100~999)</label>
@@ -370,493 +320,486 @@ h1{
   </div>
 </div>
 
-<!-- 運算中提示 -->
 <div class="loading-overlay" id="loadingOverlay">
   <span>運算中...</span>
 </div>
 
 <script>
-
-/* ===== Service Worker（PWA，保持原樣） ===== */
+/* ===== Service Worker ===== */
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js')
-      .then((registration) => { console.log('Service Worker registered! Scope: ', registration.scope); })
-      .catch((err) => { console.log('Service Worker registration failed: ', err); });
+      .then(r => console.log('SW registered:', r.scope))
+      .catch(e => console.log('SW failed:', e));
   });
 }
 
 /* ===== 工具函式 ===== */
 function randInt(min,max){ return Math.floor(Math.random()*(max-min+1))+min; }
 function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-function shuffle(arr){ const a=arr.slice(); for (let i=a.length-1;i>0;i--){ const j=randInt(0,i); [a[i],a[j]]=[a[j],a[i]];} return a; }
+function shuffle(arr){ const a=arr.slice(); for(let i=a.length-1;i>0;i--){ const j=randInt(0,i);[a[i],a[j]]=[a[j],a[i]];} return a; }
 function permutations(arr){
-  if (arr.length<=1) return [arr.slice()];
+  if(arr.length<=1) return [arr.slice()];
   const result=[];
-  for (let i=0;i<arr.length;i++){
+  for(let i=0;i<arr.length;i++){
     const rest=arr.slice(0,i).concat(arr.slice(i+1));
-    for (const p of permutations(rest)) result.push([arr[i]].concat(p));
+    for(const p of permutations(rest)) result.push([arr[i]].concat(p));
   }
   return result;
 }
 
-const OPS_SHOW = {"*":"×","/":"÷","+":"＋","-":"－"};
-const ALL_OPS = ["+","-","*","/"];
-const MUL_DIV = ["*","/"];
-const ADD_SUB = ["+","-"];
-const EPS = 1e-9;
-const OP_PERMS = permutations(ALL_OPS); // 4 種運算子的全部 24 種排列，供「每種都用一次」模式使用
+const OPS_SHOW={"*":"×","/":"÷","+":"＋","-":"－"};
+const ALL_OPS=["+","-","*","/"];
+const MUL_DIV=["*","/"];
+const ADD_SUB=["+","-"];
+const EPS=1e-9;
+const OP_PERMS=permutations(ALL_OPS);
 
-/* 數字候選池 (0-9, 10-99)：只允許一位與二位數字 */
-const ONE = Array.from({length:10},(_,i)=>String(i));
-const TWO = Array.from({length:90},(_,i)=>String(i+10));
-const NUM_POOL = ONE.concat(TWO);
+const ONE=Array.from({length:10},(_,i)=>String(i));
+const TWO=Array.from({length:90},(_,i)=>String(i+10));
+const NUM_POOL=ONE.concat(TWO);
 
-/* 快速四則運算（自製遞迴下降解析器，含括號／precedence／除零保護，取代 Function()） */
+/* ===== 核心解析器（含整除強制）===== */
 function evalArith(expr){
-  const tokens = expr.match(/\d+|[+\-*/()]/g);
-  if (!tokens) return NaN;
-  let pos = 0;
-  function parseE(){ let v=parseT(); while(pos<tokens.length&&(tokens[pos]==='+'||tokens[pos]==='-')){const op=tokens[pos++];const r=parseT();if(isNaN(r)||isNaN(v))return NaN;v=op==='+'?v+r:v-r;} return v; }
-  function parseT(){ let v=parseF(); while(pos<tokens.length&&(tokens[pos]==='*'||tokens[pos]==='/')){const op=tokens[pos++];const r=parseF();if(isNaN(r)||isNaN(v))return NaN;if(op==='*')v=v*r;else{if(r===0)return NaN;v=v/r;}} return v; }
-  function parseF(){ if(pos>=tokens.length)return NaN; if(tokens[pos]==='('){pos++;const v=parseE();if(tokens[pos]!==')')return NaN;pos++;return v;} if(/^\d+$/.test(tokens[pos]))return parseInt(tokens[pos++],10); return NaN; }
-  const v = parseE();
-  if (pos !== tokens.length) return NaN;
+  const tokens=expr.match(/\d+|[+\-*/()]/g);
+  if(!tokens) return NaN;
+  let pos=0;
+  function parseE(){
+    let v=parseT();
+    while(pos<tokens.length&&(tokens[pos]==='+'||tokens[pos]==='-')){
+      const op=tokens[pos++]; const r=parseT();
+      if(isNaN(r)||isNaN(v)) return NaN;
+      v=op==='+'?v+r:v-r;
+      /* 減法不能產生負數 */
+      if(v<-EPS) return NaN;
+    }
+    return v;
+  }
+  function parseT(){
+    let v=parseF();
+    while(pos<tokens.length&&(tokens[pos]==='*'||tokens[pos]==='/')){
+      const op=tokens[pos++]; const r=parseF();
+      if(isNaN(r)||isNaN(v)) return NaN;
+      if(op==='*'){
+        v=v*r;
+      } else {
+        /* ★ 除法：除數不為 0，且必須整除（無餘數） */
+        if(r===0) return NaN;
+        const q=v/r;
+        if(!Number.isFinite(q)||Math.abs(q-Math.round(q))>EPS) return NaN;
+        v=Math.round(q);
+      }
+    }
+    return v;
+  }
+  function parseF(){
+    if(pos>=tokens.length) return NaN;
+    if(tokens[pos]==='('){pos++; const v=parseE(); if(tokens[pos]!==')') return NaN; pos++; return v;}
+    if(/^\d+$/.test(tokens[pos])) return parseInt(tokens[pos++],10);
+    return NaN;
+  }
+  const v=parseE();
+  if(pos!==tokens.length) return NaN;
   return v;
 }
-/* 安全運算：防運算子開頭/結尾、防除0、結果不可為負數（負數視為失敗） */
+
+/* 安全運算：結果不可為負 */
 function safeEval(expr){
-  if (/^[+\-*/]/.test(expr) || /[+\-*/]$/.test(expr)) return NaN;
-  const v = evalArith(expr);
-  if (typeof v === "number" && isFinite(v)){
-    if (v < -1e-9) return NaN;
-    return v < 0 ? 0 : v;
+  if(/^[+\-*/]/.test(expr)||/[+\-*/]$/.test(expr)) return NaN;
+  const v=evalArith(expr);
+  if(typeof v==="number"&&isFinite(v)){
+    if(v<-EPS) return NaN;
+    return v<0?0:v;
   }
   return NaN;
 }
 function fmtNum(x){
-  if (x===null || isNaN(x)) return "-";
-  if (Math.abs(x - Math.round(x)) < 1e-9) return String(Math.round(x));
+  if(x===null||isNaN(x)) return "-";
+  if(Math.abs(x-Math.round(x))<EPS) return String(Math.round(x));
   return (Math.round(x*100)/100).toFixed(2);
 }
-/* 公式 token 內是否有「除以 0」 */
-function hasZeroDivision(nums, ops){
-  for (let i=0;i<ops.length;i++) if (ops[i]==='/' && parseInt(nums[i+1],10)===0) return true;
+function hasZeroDivision(nums,ops){
+  for(let i=0;i<ops.length;i++) if(ops[i]==='/'&&parseInt(nums[i+1],10)===0) return true;
   return false;
 }
 
-/* ===== 計分（依官方規則）：得分 = 100 - 誤差；方塊數≥8 起加分，最多 16 方塊 +45 ===== */
-/* 方塊總數：數字依位數計（個位=1、十位=2），加運算子方塊；若用一對括號再 +2 */
+/* ===== 計分 ===== */
 function countBlocks(t){
-  let n=0; for (const num of t.numbers) n+=String(num).length; n+=t.ops.length; if (t.paren) n+=2; return n;
+  let n=0; for(const num of t.numbers) n+=String(num).length; n+=t.ops.length; if(t.paren) n+=2; return n;
 }
-function bonusForBlocks(b){ if (b<8) return 0; return Math.min(45, 5*(b-7)); }
-function scoreFor(error, blocks){
-  if (isNaN(error)||error===Infinity) return 0;
-  const base = Math.max(0,100-error);
-  if (base<=0) return 0;
-  return base + bonusForBlocks(blocks);
+function bonusForBlocks(b){ if(b<8) return 0; return Math.min(45,5*(b-7)); }
+function scoreFor(error,blocks){
+  if(isNaN(error)||error===Infinity) return 0;
+  const base=Math.max(0,100-error);
+  if(base<=0) return 0;
+  return base+bonusForBlocks(blocks);
 }
-/* 排名準則：完全命中(誤差=0)一律優先於任何近似解；命中時方塊數越多越好；
-   都沒命中時才退回用分數比較（近似解的備案排序） */
-function rankOf(f){ return f.error < EPS ? 100000 + f.blocks : f.score; }
-function isExact(f){ return f.error < EPS; }
+function rankOf(f){ return f.error<EPS?100000+f.blocks:f.score; }
+function isExact(f){ return f.error<EPS; }
 
-/* 公式合法性：數字 token 不重複、位元(每個數字字元)不重複、運算子不重複 */
-function tokensUnique(nums, ops){
-  if (new Set(nums).size!==nums.length) return false;
-  if (new Set(ops).size!==ops.length) return false;
+function tokensUnique(nums,ops){
+  if(new Set(nums).size!==nums.length) return false;
+  if(new Set(ops).size!==ops.length) return false;
   const seen=new Set();
-  for (const n of nums) for (const ch of n){ if(seen.has(ch))return false; seen.add(ch); }
+  for(const n of nums) for(const ch of n){ if(seen.has(ch)) return false; seen.add(ch); }
   return true;
 }
 
-/* 在 nums/ops 排列中插入一對括號（paren=[start,end]，包住 nums[start..end]） */
-function buildExpr(nums, ops, paren){
-  let e=""; for (let i=0;i<nums.length;i++){ if(paren&&i===paren[0])e+="("; e+=nums[i]; if(paren&&i===paren[1])e+=")"; if(i<ops.length)e+=ops[i]; } return e;
+function buildExpr(nums,ops,paren){
+  let e="";
+  for(let i=0;i<nums.length;i++){
+    if(paren&&i===paren[0]) e+="(";
+    e+=nums[i];
+    if(paren&&i===paren[1]) e+=")";
+    if(i<ops.length) e+=ops[i];
+  }
+  return e;
 }
-/* 所有可能的括號範圍（長度≥2，且不包住整個算式） */
 function parenVariants(nums){
   const v=[]; const n=nums.length;
-  for (let s=0;s<n;s++) for (let e=s+1;e<n;e++){ if(s===0&&e===n-1)continue; v.push([s,e]); }
+  for(let s=0;s<n;s++) for(let e=s+1;e<n;e++){ if(s===0&&e===n-1) continue; v.push([s,e]); }
   return v;
 }
 
-/* ===== 追求最高分的搜尋演算法 =====
-   策略：多起點隨機 + 爬山局部搜尋。形狀權重偏向「5 個數字」以盡量多用方塊（加分最高），
-   並在維持命中／逼近目標的前提下，由 scoreFor 同時權衡「誤差」與「方塊數」找出總分最高的公式。 */
-function exprFromTokens(nums, ops){ let e=""; for(let i=0;i<nums.length;i++){e+=nums[i]; if(i<ops.length)e+=ops[i];} return e; }
+/* ===== 搜尋 ===== */
+function exprFromTokens(nums,ops){ let e=""; for(let i=0;i<nums.length;i++){e+=nums[i]; if(i<ops.length)e+=ops[i];} return e; }
 
-function makeFormula(nums, ops, target){
-  if (!tokensUnique(nums, ops)) return null;
-  if (hasZeroDivision(nums, ops)) return null;
-  const expr = exprFromTokens(nums, ops);
-  const val = safeEval(expr);
-  if (isNaN(val)) return null;
-  const error = Math.abs(val - target);
-  const blocks = countBlocks({numbers:nums, ops:ops, paren:null});
-  return { exprJS:expr, exprShow:expr.replace(/\*/g,'×').replace(/\//g,'÷'), value:val, error,
-           tokens:{numbers:nums.slice(), ops:ops.slice()}, blocks, score:scoreFor(error,blocks) };
+function makeFormula(nums,ops,target){
+  if(!tokensUnique(nums,ops)) return null;
+  if(hasZeroDivision(nums,ops)) return null;
+  const expr=exprFromTokens(nums,ops);
+  const val=safeEval(expr);
+  if(isNaN(val)) return null;
+  const error=Math.abs(val-target);
+  const blocks=countBlocks({numbers:nums,ops:ops,paren:null});
+  return{exprJS:expr,exprShow:expr.replace(/\*/g,'×').replace(/\//g,'÷'),value:val,error,
+    tokens:{numbers:nums.slice(),ops:ops.slice()},blocks,score:scoreFor(error,blocks)};
 }
 
-/* 隨機挑 n 個數字（一定含幸運方塊A），偏好二位數以增加方塊；維持位元不重複 */
-function pickNumbers(n, luckA){
+function pickNumbers(n,luckA){
   const aStr=String(luckA);
   const used=new Set(aStr.split(''));
   const nums=[aStr];
   let guard=0;
-  while (nums.length<n && guard<300){
+  while(nums.length<n&&guard<300){
     guard++;
-    const cand = Math.random()<0.9 ? String(randInt(10,99)) : String(randInt(0,9));
-    if (nums.includes(cand)) continue;
+    const cand=Math.random()<0.9?String(randInt(10,99)):String(randInt(0,9));
+    if(nums.includes(cand)) continue;
     const ds=cand.split('');
-    if (new Set(ds).size!==ds.length) continue;      // 數字本身位元不重複（如 11 不合法）
-    if (ds.some(d=>used.has(d))) continue;            // 與已選數字位元不重複
+    if(new Set(ds).size!==ds.length) continue;
+    if(ds.some(d=>used.has(d))) continue;
     nums.push(cand); ds.forEach(d=>used.add(d));
   }
-  if (nums.length<n) return null;
+  if(nums.length<n) return null;
   return shuffle(nums);
 }
-/* 挑運算子：一定含 B、C；不足再補不重複的運算子 */
-function pickOps(opsCount, luckB, luckC){
-  if (opsCount<2) return null;
+function pickOps(opsCount,luckB,luckC){
+  if(opsCount<2) return null;
   const base=[luckB,luckC];
   const rem=ALL_OPS.filter(o=>o!==luckB&&o!==luckC);
   const need=opsCount-2;
-  if (need>rem.length) return null;
+  if(need>rem.length) return null;
   return shuffle(base.concat(shuffle(rem).slice(0,need)));
 }
-function randomInit(n, target, luckA, luckB, luckC){
-  for (let t=0;t<30;t++){
-    const nums=pickNumbers(n, luckA); if(!nums) return null;
-    const ops=pickOps(n-1, luckB, luckC); if(!ops) return null;
-    const f=makeFormula(nums, ops, target); if(f) return f;
+function randomInit(n,target,luckA,luckB,luckC){
+  for(let t=0;t<30;t++){
+    const nums=pickNumbers(n,luckA); if(!nums) return null;
+    const ops=pickOps(n-1,luckB,luckC); if(!ops) return null;
+    const f=makeFormula(nums,ops,target); if(f) return f;
   }
   return null;
 }
-/* 某位置可替換的數字候選（相鄰微調 + 全域抽樣） */
-function numberCandidates(nums, idx){
+function numberCandidates(nums,idx){
   const cur=parseInt(nums[idx],10);
   const out=[];
-  for (let v=Math.max(0,cur-12); v<=Math.min(99,cur+12); v++) out.push(String(v));
-  for (const x of shuffle(NUM_POOL).slice(0,30)) out.push(x);
+  for(let v=Math.max(0,cur-12);v<=Math.min(99,cur+12);v++) out.push(String(v));
+  for(const x of shuffle(NUM_POOL).slice(0,30)) out.push(x);
   return out;
 }
-/* 爬山：每輪嘗試「換數字 / 換位置 / 換非鎖定運算子 / 換運算子位置」，取最高分鄰居 */
-function hillClimb(f, target, luckA, luckB, luckC){
-  let best=f, improved=true, iters=0;
-  while (improved && iters<50){
+function hillClimb(f,target,luckA,luckB,luckC){
+  let best=f,improved=true,iters=0;
+  while(improved&&iters<50){
     improved=false; iters++;
-    const nums=best.tokens.numbers, ops=best.tokens.ops;
+    const nums=best.tokens.numbers,ops=best.tokens.ops;
     let lb=best;
-    for (let i=0;i<nums.length;i++){
-      if (nums[i]===String(luckA)) continue;
-      for (const cand of numberCandidates(nums,i)){
-        if (cand===nums[i] || nums.includes(cand)) continue;
+    for(let i=0;i<nums.length;i++){
+      if(nums[i]===String(luckA)) continue;
+      for(const cand of numberCandidates(nums,i)){
+        if(cand===nums[i]||nums.includes(cand)) continue;
         const tn=nums.slice(); tn[i]=cand;
         const f2=makeFormula(tn,ops,target);
-        if (f2 && rankOf(f2)>rankOf(lb)) lb=f2;
+        if(f2&&rankOf(f2)>rankOf(lb)) lb=f2;
       }
     }
-    for (let i=0;i<nums.length;i++) for (let j=i+1;j<nums.length;j++){
-      const tn=nums.slice(); [tn[i],tn[j]]=[tn[j],tn[i]];
+    for(let i=0;i<nums.length;i++) for(let j=i+1;j<nums.length;j++){
+      const tn=nums.slice();[tn[i],tn[j]]=[tn[j],tn[i]];
       const f2=makeFormula(tn,ops,target);
-      if (f2 && rankOf(f2)>rankOf(lb)) lb=f2;
+      if(f2&&rankOf(f2)>rankOf(lb)) lb=f2;
     }
-    for (let k=0;k<ops.length;k++){
-      if (ops[k]===luckB || ops[k]===luckC) continue;
-      for (const o of ALL_OPS){
-        if (o===ops[k]) continue;
+    for(let k=0;k<ops.length;k++){
+      if(ops[k]===luckB||ops[k]===luckC) continue;
+      for(const o of ALL_OPS){
+        if(o===ops[k]) continue;
         const to=ops.slice(); to[k]=o;
-        if (new Set(to).size!==to.length) continue;
-        if (!to.includes(luckB)||!to.includes(luckC)) continue;
+        if(new Set(to).size!==to.length) continue;
+        if(!to.includes(luckB)||!to.includes(luckC)) continue;
         const f2=makeFormula(nums,to,target);
-        if (f2 && rankOf(f2)>rankOf(lb)) lb=f2;
+        if(f2&&rankOf(f2)>rankOf(lb)) lb=f2;
       }
     }
-    for (let i=0;i<ops.length;i++) for (let j=i+1;j<ops.length;j++){
-      const to=ops.slice(); [to[i],to[j]]=[to[j],to[i]];
+    for(let i=0;i<ops.length;i++) for(let j=i+1;j<ops.length;j++){
+      const to=ops.slice();[to[i],to[j]]=[to[j],to[i]];
       const f2=makeFormula(nums,to,target);
-      if (f2 && rankOf(f2)>rankOf(lb)) lb=f2;
+      if(f2&&rankOf(f2)>rankOf(lb)) lb=f2;
     }
-    if (rankOf(lb)>rankOf(best)){ best=lb; improved=true; }
+    if(rankOf(lb)>rankOf(best)){best=lb; improved=true;}
   }
   return best;
 }
 
-/* 試著加上括號方塊以再提升總分（誤差變動但只在分數更高時採用） */
-function finalizeFormula(f, target){
-  const nums=f.tokens.numbers, ops=f.tokens.ops, baseVal=f.value;
+function finalizeFormula(f,target){
+  const nums=f.tokens.numbers,ops=f.tokens.ops,baseVal=f.value;
   const baseErr=Math.abs(baseVal-target);
   const baseBlocks=countBlocks({numbers:nums,ops:ops,paren:null});
-  let best={ exprJS:f.exprJS, exprShow:f.exprShow, value:baseVal, error:baseErr,
-    tokens:{numbers:nums.slice(),ops:ops.slice(),paren:null}, blocks:baseBlocks, score:scoreFor(baseErr,baseBlocks) };
-  for (const pr of parenVariants(nums)){
+  let best={exprJS:f.exprJS,exprShow:f.exprShow,value:baseVal,error:baseErr,
+    tokens:{numbers:nums.slice(),ops:ops.slice(),paren:null},blocks:baseBlocks,score:scoreFor(baseErr,baseBlocks)};
+  for(const pr of parenVariants(nums)){
     const expr=buildExpr(nums,ops,pr);
     const val=safeEval(expr);
-    if (isNaN(val)) continue;
-    if (Math.abs(val-baseVal)<EPS) continue;          // 括號未改變結果則無意義
+    if(isNaN(val)) continue;
+    if(Math.abs(val-baseVal)<EPS) continue;
     const err=Math.abs(val-target);
     const blocks=countBlocks({numbers:nums,ops:ops,paren:pr});
     const score=scoreFor(err,blocks);
-    const cand={ exprJS:expr, exprShow:expr.replace(/\*/g,'×').replace(/\//g,'÷'), value:val, error:err,
-      tokens:{numbers:nums.slice(),ops:ops.slice(),paren:pr}, blocks, score };
-    if (rankOf(cand)>rankOf(best)) best=cand;
+    const cand={exprJS:expr,exprShow:expr.replace(/\*/g,'×').replace(/\//g,'÷'),value:val,error:err,
+      tokens:{numbers:nums.slice(),ops:ops.slice(),paren:pr},blocks,score};
+    if(rankOf(cand)>rankOf(best)) best=cand;
   }
   best.bonus=bonusForBlocks(best.blocks);
   return best;
 }
 
-/* ===== 新規則模式（Tier 0，最優先）：
-   0~9 每個數字恰用一次 → 必為 5 個兩位數；四種運算子（+ - × ÷）各恰用一次；
-   恰一對「有意義」括號（括號內若拿掉會改變計算結果）；計算結果完全等於目標數字。
-   幸運方塊 A/B/C 在此模式下必然滿足（A 是 0~9 之一、B/C 是四運算子之一）。 ===== */
-const PAREN_SHAPES_5 = parenVariants([0,1,2,3,4]);     // 9 種括號範圍（不含整式）
-const ALL_STRUCTURES = [];                              // 216 種「運算子排列 × 括號位置」結構
-for (const ops of OP_PERMS) for (const pr of PAREN_SHAPES_5) ALL_STRUCTURES.push({ops, pr});
+/* ===== Tier 0：完全符合新規則 ===== */
+const PAREN_SHAPES_5=parenVariants([0,1,2,3,4]);
+const ALL_STRUCTURES=[];
+for(const ops of OP_PERMS) for(const pr of PAREN_SHAPES_5) ALL_STRUCTURES.push({ops,pr});
 
 function digitsToNums(digits){
   const nums=[];
-  for (let i=0;i<10;i+=2){
-    if (digits[i]==='0') return null;   // 兩位數不可有前導 0
+  for(let i=0;i<10;i+=2){
+    if(digits[i]==='0') return null;
     nums.push(digits[i]+digits[i+1]);
   }
   return nums;
 }
-/* 在固定的「運算子排列＋括號位置」結構下，計算某個 0~9 排列對應的公式值（括號須有意義） */
-function evalStructure(nums, ops, pr){
-  const baseVal=safeEval(exprFromTokens(nums, ops));
-  if (isNaN(baseVal)) return null;
-  const val=safeEval(buildExpr(nums, ops, pr));
-  if (isNaN(val)) return null;
-  if (Math.abs(val-baseVal)<EPS) return null;   // 括號未改變結果則無意義
+function evalStructure(nums,ops,pr){
+  const baseVal=safeEval(exprFromTokens(nums,ops));
+  if(isNaN(baseVal)) return null;
+  const val=safeEval(buildExpr(nums,ops,pr));
+  if(isNaN(val)) return null;
+  if(Math.abs(val-baseVal)<EPS) return null;
   return val;
 }
-/* 固定結構，對 0~9 的排列做爬山（交換任意兩個數字位元），尋找誤差=0 的指派 */
-function hillClimbDigits(initDigits, ops, pr, target){
+function hillClimbDigits(initDigits,ops,pr,target){
   let best=initDigits.slice();
-  let bestVal=null, bestNums=digitsToNums(best);
-  if (bestNums) bestVal=evalStructure(bestNums, ops, pr);
-  let bestErr = bestVal===null ? Infinity : Math.abs(bestVal-target);
-  let improved=true, iters=0;
-  while (improved && iters<60 && bestErr>=EPS){
+  let bestVal=null,bestNums=digitsToNums(best);
+  if(bestNums) bestVal=evalStructure(bestNums,ops,pr);
+  let bestErr=bestVal===null?Infinity:Math.abs(bestVal-target);
+  let improved=true,iters=0;
+  while(improved&&iters<60&&bestErr>=EPS){
     improved=false; iters++;
-    for (let i=0;i<10;i++){
-      for (let j=i+1;j<10;j++){
-        const cand=best.slice(); [cand[i],cand[j]]=[cand[j],cand[i]];
+    for(let i=0;i<10;i++){
+      for(let j=i+1;j<10;j++){
+        const cand=best.slice();[cand[i],cand[j]]=[cand[j],cand[i]];
         const nums=digitsToNums(cand);
-        if (!nums) continue;
-        const val=evalStructure(nums, ops, pr);
-        if (val===null) continue;
+        if(!nums) continue;
+        const val=evalStructure(nums,ops,pr);
+        if(val===null) continue;
         const err=Math.abs(val-target);
-        if (err<bestErr-EPS){ bestErr=err; best=cand; bestVal=val; improved=true; }
+        if(err<bestErr-EPS){bestErr=err; best=cand; bestVal=val; improved=true;}
       }
     }
   }
-  return { digits:best, value:bestVal, error:bestErr };
+  return{digits:best,value:bestVal,error:bestErr};
 }
-function searchFullConstraintFormulas(target, opts){
+function searchFullConstraintFormulas(target,opts){
   opts=opts||{};
   const maxBudget=opts.maxBudget||500;
   const t0=Date.now();
   const found=new Map();
   const structures=shuffle(ALL_STRUCTURES);
   let si=0;
-  while (Date.now()-t0<maxBudget && found.size<5){
-    const struct=structures[si % structures.length]; si++;
+  while(Date.now()-t0<maxBudget&&found.size<5){
+    const struct=structures[si%structures.length]; si++;
     const initDigits=shuffle(['0','1','2','3','4','5','6','7','8','9']);
-    const climbed=hillClimbDigits(initDigits, struct.ops, struct.pr, target);
-    if (climbed.error<EPS){
+    const climbed=hillClimbDigits(initDigits,struct.ops,struct.pr,target);
+    if(climbed.error<EPS){
       const nums=digitsToNums(climbed.digits);
-      if (!nums || hasZeroDivision(nums, struct.ops)) continue;
-      const expr=buildExpr(nums, struct.ops, struct.pr);
+      if(!nums||hasZeroDivision(nums,struct.ops)) continue;
+      const expr=buildExpr(nums,struct.ops,struct.pr);
+      /* 驗證括號確有意義且整除合法 */
+      const finalVal=safeEval(expr);
+      if(isNaN(finalVal)||Math.abs(finalVal-target)>EPS) continue;
       const exprShow=expr.replace(/\*/g,'×').replace(/\//g,'÷');
-      if (found.has(exprShow)) continue;
-      found.set(exprShow, {
-        exprJS:expr, exprShow, value:target, error:0,
-        tokens:{numbers:nums.slice(), ops:struct.ops.slice(), paren:struct.pr},
-        blocks:16, bonus:45, score:145, fullyCompliant:true
+      if(found.has(exprShow)) continue;
+      found.set(exprShow,{
+        exprJS:expr,exprShow,value:target,error:0,
+        tokens:{numbers:nums.slice(),ops:struct.ops.slice(),paren:struct.pr},
+        blocks:16,bonus:45,score:145,fullyCompliant:true
       });
     }
-    if (si>20000) break;
+    if(si>20000) break;
   }
-  return { list:Array.from(found.values()), groupings:si };
+  return{list:Array.from(found.values()),groupings:si};
 }
 
-/* 主搜尋（總入口，三層優先序退回）：
-   Tier0：完全符合新規則（0~9 分配、四運算子全用、一對有意義括號、完全等於目標）
-   Tier1：放寬數字分配/括號規則，但仍要求完全等於目標（searchApproxFormulas 內建命中優先邏輯）
-   Tier2：兩者都找不到時，由 searchApproxFormulas 退回最接近目標的近似公式 */
-function searchFormulas(target, luckA, luckB, luckC, opts){
+/* ===== 主搜尋入口 ===== */
+function searchFormulas(target,luckA,luckB,luckC,opts){
   opts=opts||{};
-  const full = searchFullConstraintFormulas(target, opts.fullOpts);
-  const list = full.list.slice(0,5);
-  if (list.length<5){
-    const approx = searchApproxFormulas(target, luckA, luckB, luckC, opts.approxOpts);
-    for (const f of approx.list){
-      if (list.length>=5) break;
-      if (list.some(x=>x.exprShow===f.exprShow)) continue;
-      list.push(Object.assign({fullyCompliant:false}, f));
+  const full=searchFullConstraintFormulas(target,opts.fullOpts);
+  const list=full.list.slice(0,5);
+  if(list.length<5){
+    const approx=searchApproxFormulas(target,luckA,luckB,luckC,opts.approxOpts);
+    for(const f of approx.list){
+      if(list.length>=5) break;
+      if(list.some(x=>x.exprShow===f.exprShow)) continue;
+      list.push(Object.assign({fullyCompliant:false},f));
     }
   }
-  const fullyCompliant = list.length>0 && list.every(f=>f.fullyCompliant);
-  const hasExact = list.length>0 && list.every(f=>f.error<EPS);
-  return { list, fullyCompliant, hasExact };
+  const fullyCompliant=list.length>0&&list.every(f=>f.fullyCompliant);
+  return{list,fullyCompliant};
 }
 
-/* 近似/退回搜尋：回傳分數最高的前 5 條（已加括號最佳化、去重、由高到低排序） */
-function searchApproxFormulas(target, luckA, luckB, luckC, opts){
+function searchApproxFormulas(target,luckA,luckB,luckC,opts){
   opts=opts||{};
-  const minBudget=opts.minBudget||220;    // 至少搜尋這麼久(ms)
-  const maxBudget=opts.maxBudget||600;    // 難題最多搜尋這麼久(ms)，避免卡頓
+  const minBudget=opts.minBudget||220;
+  const maxBudget=opts.maxBudget||600;
   const t0=Date.now();
-  const pool=new Map();                    // exprJS -> 爬山後公式
-  const shapes=[5,5,5,5,4,4,4,3];          // 權重偏向 5 數字(方塊最多)
-  let restarts=0, bestRank=-1;
-  while (true){
+  const pool=new Map();
+  const shapes=[5,5,5,5,4,4,4,3];
+  let restarts=0,bestRank=-1;
+  while(true){
     const elapsed=Date.now()-t0;
-    if (elapsed>=maxBudget) break;
-    if (elapsed>=minBudget && bestRank>=100000+15) break;  // 已找到命中且方塊接近封頂
+    if(elapsed>=maxBudget) break;
+    if(elapsed>=minBudget&&bestRank>=100000+15) break;
     restarts++;
     const n=pick(shapes);
-    const init=randomInit(n, target, luckA, luckB, luckC);
-    if (!init){ if(restarts>4000) break; continue; }
-    const climbed=hillClimb(init, target, luckA, luckB, luckC);
-    if (!pool.has(climbed.exprJS) || rankOf(pool.get(climbed.exprJS))<rankOf(climbed)) pool.set(climbed.exprJS, climbed);
+    const init=randomInit(n,target,luckA,luckB,luckC);
+    if(!init){if(restarts>4000) break; continue;}
+    const climbed=hillClimb(init,target,luckA,luckB,luckC);
+    if(!pool.has(climbed.exprJS)||rankOf(pool.get(climbed.exprJS))<rankOf(climbed)) pool.set(climbed.exprJS,climbed);
     const r=rankOf(climbed);
-    if (r>bestRank) bestRank=r;
-    if (climbed.error<EPS && climbed.blocks>=16) break;  // 命中且方塊封頂
-    if (restarts>30000) break;
+    if(r>bestRank) bestRank=r;
+    if(climbed.error<EPS&&climbed.blocks>=16) break;
+    if(restarts>30000) break;
   }
   let arr=Array.from(pool.values()).map(f=>finalizeFormula(f,target));
   arr.sort((a,b)=>rankOf(b)-rankOf(a));
   const seen=new Set(); const uniq=[];
-  for (const f of arr){ if(seen.has(f.exprShow))continue; seen.add(f.exprShow); uniq.push(f); if(uniq.length>=5)break; }
+  for(const f of arr){if(seen.has(f.exprShow))continue; seen.add(f.exprShow); uniq.push(f); if(uniq.length>=5)break;}
   const exactOnly=uniq.filter(isExact);
-  const list = exactOnly.length>0 ? exactOnly : uniq;
-  const hasExact = exactOnly.length>0;
-  return { list, restarts, bestRank, hasExact };
+  const list=exactOnly.length>0?exactOnly:uniq;
+  return{list,restarts,bestRank,hasExact:exactOnly.length>0};
 }
 
-/* ===== UI 與主流程（DOM ID 與互動行為與原本相同） ===== */
-const d0 = document.getElementById("d0");
-const d1 = document.getElementById("d1");
-const d2 = document.getElementById("d2");
-const luckAEl = document.getElementById("luckA");
-const luckBEl = document.getElementById("luckB");
-const luckCEl = document.getElementById("luckC");
-const formulaRows = document.getElementById("formulaRows");
-const errorRows = document.getElementById("errorRows");
-const regenBtn = document.getElementById("regenBtn");
-const manualBtn = document.getElementById("manualBtn");
-const modal = document.getElementById("manualModal");
-const manualTarget = document.getElementById("manualTarget");
-const manualA = document.getElementById("manualA");
-const manualB = document.getElementById("manualB");
-const manualC = document.getElementById("manualC");
-const manualOk = document.getElementById("manualOk");
-const manualCancel = document.getElementById("manualCancel");
-const loadingOverlay = document.getElementById("loadingOverlay");
-const exactWarning = document.getElementById("exactWarning");
-const formulaCard = document.getElementById("formulaCard");
-const toggleBtn = document.getElementById("toggleBtn");
-const toggleLabel = document.getElementById("toggleLabel");
-let lastCount = 5;
+/* ===== UI ===== */
+const d0=document.getElementById("d0"),d1=document.getElementById("d1"),d2=document.getElementById("d2");
+const luckAEl=document.getElementById("luckA"),luckBEl=document.getElementById("luckB"),luckCEl=document.getElementById("luckC");
+const formulaRows=document.getElementById("formulaRows"),errorRows=document.getElementById("errorRows");
+const regenBtn=document.getElementById("regenBtn"),manualBtn=document.getElementById("manualBtn");
+const modal=document.getElementById("manualModal");
+const manualTarget=document.getElementById("manualTarget"),manualA=document.getElementById("manualA");
+const manualB=document.getElementById("manualB"),manualC=document.getElementById("manualC");
+const manualOk=document.getElementById("manualOk"),manualCancel=document.getElementById("manualCancel");
+const loadingOverlay=document.getElementById("loadingOverlay");
+
+const formulaCard=document.getElementById("formulaCard");
+const toggleBtn=document.getElementById("toggleBtn"),toggleLabel=document.getElementById("toggleLabel");
+let lastCount=5;
 
 function setExpanded(exp){
-  formulaCard.classList.toggle("expanded", exp);
-  toggleBtn.setAttribute("aria-expanded", exp ? "true" : "false");
-  toggleBtn.style.display = lastCount > 1 ? "inline-flex" : "none";
-  toggleLabel.textContent = exp ? "收合" : `查看其餘 ${Math.max(lastCount-1,0)} 組`;
+  formulaCard.classList.toggle("expanded",exp);
+  toggleBtn.setAttribute("aria-expanded",exp?"true":"false");
+  toggleBtn.style.display=lastCount>1?"inline-flex":"none";
+  toggleLabel.textContent=exp?"收合":`查看其餘 ${Math.max(lastCount-1,0)} 組`;
 }
-toggleBtn.addEventListener("click", () => {
-  setExpanded(!formulaCard.classList.contains("expanded"));
-});
+toggleBtn.addEventListener("click",()=>{ setExpanded(!formulaCard.classList.contains("expanded")); });
 
 function initFiveRows(){
-  formulaRows.innerHTML = "";
-  errorRows.innerHTML = "";
-  for (let i=0;i<5;i++){
-    const row = document.createElement("div");
-    row.className = i===0 ? "row best" : "row";
-    row.innerHTML = `<div class="idx">${i+1}.</div><div class="expr" id="expr${i}">-</div><div class="meta" id="meta${i}"></div>`;
+  formulaRows.innerHTML=""; errorRows.innerHTML="";
+  for(let i=0;i<5;i++){
+    const row=document.createElement("div");
+    row.className=i===0?"row best":"row";
+    row.innerHTML=`<div class="idx">${i+1}.</div><div class="expr" id="expr${i}">-</div><div class="meta" id="meta${i}"></div>`;
     formulaRows.appendChild(row);
-    const er = document.createElement("div"); er.className = i===0 ? "err-row best" : "err-row"; er.id = "err"+i; er.textContent="-";
+    const er=document.createElement("div");
+    er.className=i===0?"err-row best":"err-row"; er.id="err"+i; er.textContent="-";
     errorRows.appendChild(er);
   }
 }
 function fillRows(arr){
-  lastCount = arr.filter(f => f && f.exprShow !== "-").length;
-  for (let i=0;i<5;i++){
-    const exprDiv = document.getElementById("expr"+i);
-    const metaDiv = document.getElementById("meta"+i);
-    const errDiv = document.getElementById("err"+i);
-    const f = arr[i];
-    if (!f || f.exprShow === "-"){
-      exprDiv.textContent = "-"; metaDiv.textContent = ""; errDiv.textContent = "-";
+  lastCount=arr.filter(f=>f&&f.exprShow!=="-").length;
+  for(let i=0;i<5;i++){
+    const exprDiv=document.getElementById("expr"+i);
+    const metaDiv=document.getElementById("meta"+i);
+    const errDiv=document.getElementById("err"+i);
+    const f=arr[i];
+    if(!f||f.exprShow==="-"){
+      exprDiv.textContent="-"; metaDiv.textContent=""; errDiv.textContent="-";
     } else {
-      exprDiv.textContent = `${f.exprShow} = ${fmtNum(f.value)}`;
-      metaDiv.textContent = `誤差 ${fmtNum(f.error)}｜方塊 ${f.blocks}｜加分 +${f.bonus}`;
-      errDiv.textContent = `${fmtNum(f.score)} 分`;
+      exprDiv.textContent=`${f.exprShow} = ${fmtNum(f.value)}`;
+      metaDiv.textContent=`誤差 ${fmtNum(f.error)}｜方塊 ${f.blocks}｜加分 +${f.bonus}`;
+      errDiv.textContent=`${fmtNum(f.score)} 分`;
     }
   }
   setExpanded(formulaCard.classList.contains("expanded"));
 }
 
-/* 隨機產題 */
 function generateLuckAndTarget(){
-  const target = randInt(100,999);
-  const luckA = String(randInt(0,9));
-  const luckB = pick(MUL_DIV);
-  const luckC = pick(ADD_SUB);
-  return { target, luckA, luckB, luckC };
+  const target=randInt(100,999);
+  const luckA=String(randInt(0,9));
+  const luckB=pick(MUL_DIV);
+  const luckC=pick(ADD_SUB);
+  return{target,luckA,luckB,luckC};
 }
 
-/* 隨機抽題 + 求最高分公式 */
 function regenerate(){
-  loadingOverlay.style.display = "flex";
+  loadingOverlay.style.display="flex";
   initFiveRows();
-  const { target, luckA, luckB, luckC } = generateLuckAndTarget();
-  const s = String(target).padStart(3,"0");
-  d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
-  luckAEl.textContent = luckA; luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
-  const { list, fullyCompliant } = searchFormulas(target, luckA, luckB, luckC);
-  exactWarning.style.display = fullyCompliant ? "none" : "block";
+  const{target,luckA,luckB,luckC}=generateLuckAndTarget();
+  const s=String(target).padStart(3,"0");
+  d0.textContent=s[0]; d1.textContent=s[1]; d2.textContent=s[2];
+  luckAEl.textContent=luckA; luckBEl.textContent=OPS_SHOW[luckB]; luckCEl.textContent=OPS_SHOW[luckC];
+  const{list}=searchFormulas(target,luckA,luckB,luckC);
   fillRows(list);
-  loadingOverlay.style.display = "none";
+  loadingOverlay.style.display="none";
 }
 
-/* 手動指定題目 + 求最高分公式 */
-function regenerateCustom(target, luckA, luckB, luckC){
-  loadingOverlay.style.display = "flex";
+function regenerateCustom(target,luckA,luckB,luckC){
+  loadingOverlay.style.display="flex";
   initFiveRows();
-  const s = String(target).padStart(3,"0");
-  d0.textContent = s[0]; d1.textContent = s[1]; d2.textContent = s[2];
-  luckAEl.textContent = String(luckA); luckBEl.textContent = OPS_SHOW[luckB]; luckCEl.textContent = OPS_SHOW[luckC];
-  const { list, fullyCompliant } = searchFormulas(target, String(luckA), luckB, luckC);
-  exactWarning.style.display = fullyCompliant ? "none" : "block";
+  const s=String(target).padStart(3,"0");
+  d0.textContent=s[0]; d1.textContent=s[1]; d2.textContent=s[2];
+  luckAEl.textContent=String(luckA); luckBEl.textContent=OPS_SHOW[luckB]; luckCEl.textContent=OPS_SHOW[luckC];
+  const{list}=searchFormulas(target,String(luckA),luckB,luckC);
   fillRows(list);
-  loadingOverlay.style.display = "none";
+  loadingOverlay.style.display="none";
 }
 
-/* 綁定 UI 行為 */
 initFiveRows();
 regenerate();
-regenBtn.addEventListener("click", () => {
-  loadingOverlay.style.display = "flex";
-  setTimeout(regenerate, 0);   // 先讓「運算中...」畫面繪製，再執行同步運算
-});
-manualBtn.addEventListener("click", ()=> { modal.style.display="flex"; });
-manualCancel.addEventListener("click", ()=> { modal.style.display="none"; });
-manualOk.addEventListener("click", ()=>{
-  const t = parseInt(manualTarget.value);
-  const a = manualA.value;
-  const b = manualB.value;
-  const c = manualC.value;
-  if (!t || t<100 || t>999){ alert("目標數字必須 100~999"); return; }
-  if (a==="" || a<0 || a>9){ alert("幸運方塊 A 必須 0~9"); return; }
-  loadingOverlay.style.display = "flex";
-  setTimeout(() => regenerateCustom(t,String(a),b,c), 0);
+regenBtn.addEventListener("click",()=>{ loadingOverlay.style.display="flex"; setTimeout(regenerate,0); });
+manualBtn.addEventListener("click",()=>{ modal.style.display="flex"; });
+manualCancel.addEventListener("click",()=>{ modal.style.display="none"; });
+manualOk.addEventListener("click",()=>{
+  const t=parseInt(manualTarget.value);
+  const a=manualA.value;
+  const b=manualB.value;
+  const c=manualC.value;
+  if(!t||t<100||t>999){alert("目標數字必須 100~999"); return;}
+  if(a===""||a<0||a>9){alert("幸運方塊 A 必須 0~9"); return;}
+  loadingOverlay.style.display="flex";
+  setTimeout(()=>regenerateCustom(t,String(a),b,c),0);
   modal.style.display="none";
 });
 </script>
