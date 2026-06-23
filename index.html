@@ -369,9 +369,9 @@ function evalArith(expr){
     while(pos<tokens.length&&(tokens[pos]==='+'||tokens[pos]==='-')){
       const op=tokens[pos++]; const r=parseT();
       if(isNaN(r)||isNaN(v)) return NaN;
+      /* 減法：每一步都必須左邊 >= 右邊，不能小減大 */
+      if(op==='-'&&v<r-EPS) return NaN;
       v=op==='+'?v+r:v-r;
-      /* 減法不能產生負數 */
-      if(v<-EPS) return NaN;
     }
     return v;
   }
